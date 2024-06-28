@@ -1,26 +1,38 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'dart:convert';
 import 'package:flutter/widgets.dart';
+import 'package:flutterproj/contacts_page.dart';
 import 'package:vector_math/vector_math_64.dart' show Vector3;
 import 'dart:async';
+import 'package:flutter/services.dart' show rootBundle;
 
 class ZoomableImage extends StatefulWidget {
-  final String imagePath;
-  ZoomableImage({required this.imagePath});
+  final String imagePath, author, info, book;
+  ZoomableImage(
+      {required this.imagePath,
+      required this.author,
+      required this.info,
+      required this.book});
 
   @override
-  FullScreenImagePage createState() =>
-      FullScreenImagePage(imagePath: imagePath);
+  FullScreenImagePage createState() => FullScreenImagePage(
+      imagePath: imagePath, author: author, info: info, book: book);
 }
 
 class FullScreenImagePage extends State<ZoomableImage> {
-  final String imagePath;
   TransformationController _transformationController =
       TransformationController();
   ScrollController _scrollController = ScrollController();
   double _currentScale = 1.0;
   bool _isBottomSheetVisible = false;
-
-  FullScreenImagePage({required this.imagePath});
+  final String imagePath, author, info, book;
+  FullScreenImagePage(
+      {required this.imagePath,
+      required this.author,
+      required this.info,
+      required this.book});
 
   @override
   void initState() {
@@ -50,7 +62,7 @@ class FullScreenImagePage extends State<ZoomableImage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Detail Information',
+                'Book: $book',
                 style: TextStyle(
                   fontSize: 24.0,
                   fontWeight: FontWeight.bold,
@@ -58,18 +70,16 @@ class FullScreenImagePage extends State<ZoomableImage> {
               ),
               SizedBox(height: 16.0),
               Text(
-                'Here is some detailed information about the image. '
-                'You can provide any additional details you want to display here. '
-                'This is a simple text display within a bottom sheet.',
+                info,
                 style: TextStyle(fontSize: 16.0),
               ),
               SizedBox(height: 16.0),
               Text(
-                'Additional Information',
+                'Author',
                 style: TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold),
               ),
               Text(
-                'More details can be added as needed to provide comprehensive information.',
+                author,
                 style: TextStyle(fontSize: 16.0),
               ),
             ],
@@ -146,12 +156,45 @@ class GalleryPage extends StatefulWidget {
   _GalleryState createState() => _GalleryState();
 }
 
+class Book {
+  final String book, image, info, author;
+
+  Book(
+      {required this.book,
+      required this.image,
+      required this.info,
+      required this.author});
+
+  factory Book.fromJson(Map<String, dynamic> json) {
+    return Book(
+        author: json['author'],
+        book: json['book'],
+        image: json['image'],
+        info: json['info']);
+  }
+}
+
 class _GalleryState extends State<GalleryPage> {
   int numColumn = 3;
   final maxColumn = 4, minColumn = 2;
   Timer? _debounce;
 
-  final List<String> imageUrls = [];
+  List<Book> imageUrls = [];
+
+  @override
+  void initState() {
+    super.initState();
+    loadData();
+  }
+
+  Future<void> loadData() async {
+    final String response = await rootBundle.loadString('assets/books.json');
+    final data = json.decode(response);
+    setState(() {
+      imageUrls = List<Book>.from(data.map((item) => Book.fromJson(item)));
+      imageUrls.sort((a, b) => a.book.compareTo(b.book));
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -159,51 +202,57 @@ class _GalleryState extends State<GalleryPage> {
         appBar: AppBar(
           title: Text("Gallery"),
         ),
-        body: Center(
-          child: GestureDetector(
-            onScaleUpdate: (ScaleUpdateDetails details) {
-              if (_debounce?.isActive ?? false) _debounce!.cancel();
-              _debounce = Timer(const Duration(milliseconds: 100), () {
-                setState(() {
-                  if (details.scale > 1.5)
-                    numColumn++;
-                  else if (details.scale < 0.8) numColumn--;
-                  if (numColumn > maxColumn) numColumn = maxColumn;
-                  if (numColumn < minColumn) numColumn = minColumn;
-                });
-              });
-            },
-            child: AnimatedSwitcher(
-              duration: Duration(milliseconds: 200),
-              transitionBuilder: (Widget child, Animation<double> animation) {
-                return FadeTransition(opacity: animation, child: child);
-              },
-              child: GridView.builder(
-                key: ValueKey<int>(numColumn),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: numColumn,
-                  childAspectRatio: 1.0,
-                ),
-                itemCount: imageUrls.length,
-                itemBuilder: (context, index) {
-                  return GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ZoomableImage(
-                                imagePath: imageUrls[index],
-                              ),
+        body: imageUrls.isEmpty
+            ? Center(child: CircularProgressIndicator())
+            : Center(
+                child: GestureDetector(
+                  onScaleUpdate: (ScaleUpdateDetails details) {
+                    if (_debounce?.isActive ?? false) _debounce!.cancel();
+                    _debounce = Timer(const Duration(milliseconds: 100), () {
+                      setState(() {
+                        if (details.scale > 1.5)
+                          numColumn++;
+                        else if (details.scale < 0.8) numColumn--;
+                        if (numColumn > maxColumn) numColumn = maxColumn;
+                        if (numColumn < minColumn) numColumn = minColumn;
+                      });
+                    });
+                  },
+                  child: AnimatedSwitcher(
+                    duration: Duration(milliseconds: 200),
+                    transitionBuilder:
+                        (Widget child, Animation<double> animation) {
+                      return FadeTransition(opacity: animation, child: child);
+                    },
+                    child: GridView.builder(
+                      key: ValueKey<int>(numColumn),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: numColumn,
+                        childAspectRatio: 1.0,
+                      ),
+                      itemCount: imageUrls.length,
+                      itemBuilder: (context, index) {
+                        return GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ZoomableImage(
+                                      imagePath: imageUrls[index].image,
+                                      book: imageUrls[index].book,
+                                      info: imageUrls[index].info,
+                                      author: imageUrls[index].author,
+                                    ),
+                                  ));
+                            },
+                            child: Hero(
+                              tag: imageUrls[index],
+                              child: Image.asset(imageUrls[index].image),
                             ));
                       },
-                      child: Hero(
-                        tag: imageUrls[index],
-                        child: Image.asset(imageUrls[index]),
-                      ));
-                },
-              ),
-            ),
-          ),
-        ));
+                    ),
+                  ),
+                ),
+              ));
   }
 }
