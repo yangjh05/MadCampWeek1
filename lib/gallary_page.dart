@@ -151,35 +151,7 @@ class _GalleryState extends State<GalleryPage> {
   final maxColumn = 4, minColumn = 2;
   Timer? _debounce;
 
-  final List<String> imageUrls = [
-    'assets/image/1.jpg',
-    'assets/image/2.png',
-    'assets/image/3.png',
-    'assets/image/4.jpg',
-    'assets/image/5.png',
-    'assets/image/6.jpg',
-    'assets/image/7.png',
-    'assets/image/8.png',
-    'assets/image/9.png',
-    'assets/image/10.png',
-    'assets/image/11.png',
-    'assets/image/12.png',
-    'assets/image/13.png',
-    'assets/image/14.png',
-    'assets/image/15.png',
-    'assets/image/16.png',
-    'assets/image/17.jpg',
-    'assets/image/18.png',
-    'assets/image/19.png',
-    'assets/image/20.png',
-    'assets/image/21.png',
-    'assets/image/22.jpg',
-    'assets/image/23.jpg',
-    'assets/image/24.jpg',
-    'assets/image/25.jpg',
-    'assets/image/26.jpg',
-    'assets/image/27.jpg',
-  ];
+  final List<String> imageUrls = [];
 
   @override
   Widget build(BuildContext context) {
