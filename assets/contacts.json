@@ -1,47 +1,48 @@
 [
     {
-        "name": "Jack",
-        "phone": "010-0000-0000",
+        "name": "Arthur Conan Doyle",
+        "phone": "⟪Sherlock Holmes⟫",
         "icon": "2"
     },
     {
-        "name": "Daisy",
-        "phone": "010-1111-2222",
+        "name": "Randall Patrick Munroe",
+        "phone": "⟪What If?: Serious Scientific Answers to Absurd Hypothetical Questions⟫",
         "icon": "1"
     },
     {
-        "name": "Daniel",
-        "phone": "010-2222-3333",
+        "name": "J. K. Rowling",
+        "phone": "⟪Harry Potter⟫",
         "icon": "1"
     },
     {
-        "name": "Justin",
-        "phone": "010-3333-4444",
+        "name": "김소월",
+        "phone": 
+        "⟪진달래꽃⟫",
         "icon": "1"
     },
     {
-        "name": "Mason",
-        "phone": "010-4444-5555",
+        "name": "히가시노 게이고",
+        "phone": "⟪나미야 잡화점의 기적⟫",
         "icon": "1"
     },
     {
-        "name": "Allen",
-        "phone": "010-5555-6666",
+        "name": "Clive Staples Lewis",
+        "phone": "⟪The Chronicles of Narnia⟫",
         "icon": "2"
     },
     {
-        "name": "Kyle",
-        "phone": "010-6666-7777",
+        "name": "Jared Mason Diamond",
+        "phone": "⟪Guns, Germs, and Steel⟫",
         "icon": "1"
     },
     {
-        "name": "Sophie",
-        "phone": "010-7777-8888",
+        "name": "박완서",
+        "phone": "⟪그 많던 싱아는 누가 다 먹었을까⟫",
         "icon": "1"
     },
     {
-        "name": "James",
-        "phone": "010-1111-1111",
+        "name": "Yuval Noah Harari",
+        "phone": "⟪Sapiens: A Brief History of Humankind⟫",
         "icon": "1"
     }
 ]
