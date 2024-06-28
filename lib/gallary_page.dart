@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:vector_math/vector_math_64.dart' show Vector3;
 import 'dart:async';
 
@@ -15,9 +16,70 @@ class FullScreenImagePage extends State<ZoomableImage> {
   final String imagePath;
   TransformationController _transformationController =
       TransformationController();
+  ScrollController _scrollController = ScrollController();
   double _currentScale = 1.0;
+  bool _isBottomSheetVisible = false;
 
   FullScreenImagePage({required this.imagePath});
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _scrollController.addListener(_scrollListener);
+  }
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    _scrollController.removeListener(_scrollListener);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollListener() {
+    if (_scrollController.position.pixels == 0.0 && !_isBottomSheetVisible) {
+      _isBottomSheetVisible = true;
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        builder: (context) => Container(
+          padding: EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Detail Information',
+                style: TextStyle(
+                  fontSize: 24.0,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 16.0),
+              Text(
+                'Here is some detailed information about the image. '
+                'You can provide any additional details you want to display here. '
+                'This is a simple text display within a bottom sheet.',
+                style: TextStyle(fontSize: 16.0),
+              ),
+              SizedBox(height: 16.0),
+              Text(
+                'Additional Information',
+                style: TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold),
+              ),
+              Text(
+                'More details can be added as needed to provide comprehensive information.',
+                style: TextStyle(fontSize: 16.0),
+              ),
+            ],
+          ),
+        ),
+      ).whenComplete(() {
+        _isBottomSheetVisible = false;
+      });
+    }
+  }
 
   void _zoomAtPosition(TapDownDetails details, double scale) {
     setState(() {
@@ -44,31 +106,38 @@ class FullScreenImagePage extends State<ZoomableImage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
-      body: Center(
-        child: GestureDetector(
-          onTap: () {
-            Navigator.pop(context);
-          },
-          onDoubleTapDown: (TapDownDetails details) {
-            if (_transformationController.value.getMaxScaleOnAxis() < 2.5)
-              _zoomAtPosition(details, 2.5);
-            else
-              _zoomAtPosition(details, 1.0);
-          },
-          child: Hero(
-            tag: imagePath,
-            child: InteractiveViewer(
-              transformationController: _transformationController,
-              boundaryMargin: EdgeInsets.all(20.0),
-              minScale: 0.1,
-              maxScale: 4.0,
-              child: Image.asset(imagePath),
+        backgroundColor: Colors.black,
+        body: Center(
+          child: SingleChildScrollView(
+            controller: _scrollController,
+            child: GestureDetector(
+              onVerticalDragUpdate: (details) {
+                if (details.primaryDelta! < 0) {
+                  _scrollListener();
+                }
+              },
+              onTap: () {
+                Navigator.pop(context);
+              },
+              onDoubleTapDown: (TapDownDetails details) {
+                if (_transformationController.value.getMaxScaleOnAxis() < 2.5)
+                  _zoomAtPosition(details, 2.5);
+                else
+                  _zoomAtPosition(details, 1.0);
+              },
+              child: Hero(
+                tag: imagePath,
+                child: InteractiveViewer(
+                  transformationController: _transformationController,
+                  boundaryMargin: EdgeInsets.all(20.0),
+                  minScale: 0.1,
+                  maxScale: 4.0,
+                  child: Image.asset(imagePath),
+                ),
+              ),
             ),
           ),
-        ),
-      ),
-    );
+        ));
   }
 }
 
