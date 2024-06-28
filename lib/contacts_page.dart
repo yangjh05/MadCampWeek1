@@ -4,6 +4,8 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'second_contacts.dart';
 
 class ContactsPage extends StatefulWidget {
+  const ContactsPage({super.key});
+
   @override
   _ContactsPageState createState() => _ContactsPageState();
 }
@@ -28,8 +30,6 @@ class _ContactsPageState extends State<ContactsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final sizeX = MediaQuery.of(context).size.width;
-    final sizeY = MediaQuery.of(context).size.height;
     return MaterialApp(
         title: 'ListView',
         home: Scaffold(
@@ -41,12 +41,10 @@ class _ContactsPageState extends State<ContactsPage> {
                   itemBuilder: (context, index) {
                     return ListTile(
                         title: Text(contacts[index].name),
-                        subtitle: Text(contacts[index].phone),
+                        subtitle: Text(contacts[index].book),
                         leading: CircleAvatar(
                           backgroundColor: Colors.grey[400],
-                          child: Icon(int.parse(contacts[index].icon) == 1
-                              ? Icons.person
-                              : Icons.question_mark),
+                          backgroundImage: AssetImage(contacts[index].image),
                         ),
                         trailing: const Icon(Icons.keyboard_arrow_right),
                         onTap: () => Navigator.push(
@@ -54,7 +52,11 @@ class _ContactsPageState extends State<ContactsPage> {
                               MaterialPageRoute(
                                   builder: (context) => SecondContacts(
                                         name: contacts[index].name,
-                                        phone: contacts[index].phone,
+                                        book: contacts[index].book,
+                                        image: contacts[index].image,
+                                        birth: contacts[index].birth,
+                                        nation: contacts[index].nation,
+                                        education: contacts[index].education,
                                       )),
                             ));
                   },
@@ -65,16 +67,28 @@ class _ContactsPageState extends State<ContactsPage> {
 
 class Contact {
   final String name;
-  final String phone;
-  final String icon;
+  final String book;
+  final String image;
+  final String birth;
+  final String nation;
+  final String education;
 
-  Contact({required this.name, required this.phone, required this.icon});
+  Contact(
+      {required this.name,
+      required this.book,
+      required this.image,
+      required this.birth,
+      required this.nation,
+      required this.education});
 
   factory Contact.fromJson(Map<String, dynamic> json) {
     return Contact(
       name: json['name'],
-      phone: json['phone'],
-      icon: json['icon'],
+      book: json['book'],
+      image: json['image'],
+      birth: json['birth'],
+      nation: json['nation'],
+      education: json['education'],
     );
   }
 }

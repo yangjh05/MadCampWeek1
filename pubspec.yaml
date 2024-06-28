@@ -31,6 +31,7 @@ dependencies:
   flutter:
     sdk: flutter
   cached_network_image: ^3.0.0  
+  auto_size_text: ^3.0.0
 
 
 
@@ -64,6 +65,7 @@ flutter:
   assets:
       - assets/contacts.json
       - assets/image/
+      - assets/author_image/
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

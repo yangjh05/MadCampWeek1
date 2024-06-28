@@ -1,48 +1,74 @@
 [
     {
         "name": "Arthur Conan Doyle",
-        "phone": "⟪Sherlock Holmes⟫",
-        "icon": "2"
+        "book": "⟪Sherlock Holmes⟫",
+        "image": "assets/author_image/author1.jpeg",
+        "birth": "1859. 5. 22.",
+        "nation": "영국",
+        "education": "에든버러대학교 대학원 의학 박사"
     },
     {
         "name": "Randall Patrick Munroe",
-        "phone": "⟪What If?: Serious Scientific Answers to Absurd Hypothetical Questions⟫",
-        "icon": "1"
+        "book": "⟪What If?: Serious Scientific Answers to Absurd Hypothetical Questions⟫",
+        "image": "assets/author_image/author2.jpeg",
+        "birth": "1984. 10. 17.",
+        "nation": "미국",
+        "education": "크리스토퍼 뉴포트 대학교 물리학 학사"
     },
     {
         "name": "J. K. Rowling",
-        "phone": "⟪Harry Potter⟫",
-        "icon": "1"
+        "book": "⟪Harry Potter⟫",
+        "image": "assets/author_image/author3.jpeg",
+        "birth": "1965. 7. 31.",
+        "nation": "영국",
+        "education": "엑서터 대학교 불문학 · 고전학 학사"
     },
     {
         "name": "김소월",
-        "phone": 
-        "⟪진달래꽃⟫",
-        "icon": "1"
+        "book": "⟪진달래꽃⟫",
+        "image": "assets/author_image/author4.jpeg",
+        "birth": "1902. 9. 7.",
+        "nation": "대한민국",
+        "education": "도쿄상과대학 전문부 (중퇴)"
     },
     {
         "name": "히가시노 게이고",
-        "phone": "⟪나미야 잡화점의 기적⟫",
-        "icon": "1"
+        "book": "⟪나미야 잡화점의 기적⟫",
+        "image": "assets/author_image/author5.jpeg",
+        "birth": "1958. 2. 4.",
+        "nation": "일본",
+        "education": "오사카 부립 대학 전기공학부 (졸업)"
     },
     {
         "name": "Clive Staples Lewis",
-        "phone": "⟪The Chronicles of Narnia⟫",
-        "icon": "2"
+        "book": "⟪The Chronicles of Narnia⟫",
+        "image": "assets/author_image/author6.jpeg",
+        "birth": "1898. 11. 29.",
+        "nation": "영국",
+        "education": "옥스퍼드대학교 학사"
     },
     {
         "name": "Jared Mason Diamond",
-        "phone": "⟪Guns, Germs, and Steel⟫",
-        "icon": "1"
+        "book": "⟪Guns, Germs, and Steel⟫",
+        "image": "assets/author_image/author7.jpeg",
+        "birth": "1937. 9. 10.",
+        "nation": "미국",
+        "education": "케임브리지 대학교 생리학 박사"
     },
     {
         "name": "박완서",
-        "phone": "⟪그 많던 싱아는 누가 다 먹었을까⟫",
-        "icon": "1"
+        "book": "⟪그 많던 싱아는 누가 다 먹었을까⟫",
+        "image": "assets/author_image/author8.jpeg",
+        "birth": "1931. 10. 20.",
+        "nation": "대한민국",
+        "education": " "
     },
     {
         "name": "Yuval Noah Harari",
-        "phone": "⟪Sapiens: A Brief History of Humankind⟫",
-        "icon": "1"
+        "book": "⟪Sapiens: A Brief History of Humankind⟫",
+        "image": "assets/author_image/author9.jpeg",
+        "birth": "1976. 2. 24.",
+        "nation": "이스라엘",
+        "education": "옥스퍼드대학교 대학원 중세전쟁사 박사"
     }
 ]
