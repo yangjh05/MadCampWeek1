@@ -1,28 +1,168 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:vector_math/vector_math_64.dart' show Vector3;
+import 'dart:async';
 
-class GalleryPage extends StatelessWidget {
+class ZoomableImage extends StatefulWidget {
+  final String imagePath;
+  ZoomableImage({required this.imagePath});
+
+  @override
+  FullScreenImagePage createState() =>
+      FullScreenImagePage(imagePath: imagePath);
+}
+
+class FullScreenImagePage extends State<ZoomableImage> {
+  final String imagePath;
+  TransformationController _transformationController =
+      TransformationController();
+  double _currentScale = 1.0;
+
+  FullScreenImagePage({required this.imagePath});
+
+  void _zoomAtPosition(TapDownDetails details, double scale) {
+    setState(() {
+      final Matrix4 transform = _transformationController.value.clone();
+      final Vector3 translation = transform.getTranslation();
+
+      if (scale > _currentScale) {
+        final double deltaX = details.localPosition.dx - translation.x;
+        final double deltaY = details.localPosition.dy - translation.y;
+        final double newX = deltaX * (scale - 1);
+        final double newY = deltaY * (scale - 1);
+
+        _transformationController.value = Matrix4.identity()
+          ..scale(scale)
+          ..translate(-newX / scale, -newY / scale);
+      } else {
+        _transformationController.value = Matrix4.identity();
+      }
+
+      _currentScale = scale;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Center(
+        child: GestureDetector(
+          onTap: () {
+            Navigator.pop(context);
+          },
+          onDoubleTapDown: (TapDownDetails details) {
+            if (_transformationController.value.getMaxScaleOnAxis() < 2.5)
+              _zoomAtPosition(details, 2.5);
+            else
+              _zoomAtPosition(details, 1.0);
+          },
+          child: Hero(
+            tag: imagePath,
+            child: InteractiveViewer(
+              transformationController: _transformationController,
+              boundaryMargin: EdgeInsets.all(20.0),
+              minScale: 0.1,
+              maxScale: 4.0,
+              child: Image.asset(imagePath),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class GalleryPage extends StatefulWidget {
+  @override
+  _GalleryState createState() => _GalleryState();
+}
+
+class _GalleryState extends State<GalleryPage> {
+  int numColumn = 3;
+  final maxColumn = 4, minColumn = 2;
+  Timer? _debounce;
+
   final List<String> imageUrls = [
-    'https://via.placeholder.com/150',
-    'https://via.placeholder.com/200',
-    // Add more image URLs here
+    'assets/image/1.jpg',
+    'assets/image/2.png',
+    'assets/image/3.png',
+    'assets/image/4.jpg',
+    'assets/image/5.png',
+    'assets/image/6.jpg',
+    'assets/image/7.png',
+    'assets/image/8.png',
+    'assets/image/9.png',
+    'assets/image/10.png',
+    'assets/image/11.png',
+    'assets/image/12.png',
+    'assets/image/13.png',
+    'assets/image/14.png',
+    'assets/image/15.png',
+    'assets/image/16.png',
+    'assets/image/17.jpg',
+    'assets/image/18.png',
+    'assets/image/19.png',
+    'assets/image/20.png',
+    'assets/image/21.png',
+    'assets/image/22.jpg',
+    'assets/image/23.jpg',
+    'assets/image/24.jpg',
+    'assets/image/25.jpg',
+    'assets/image/26.jpg',
+    'assets/image/27.jpg',
   ];
 
   @override
   Widget build(BuildContext context) {
-    return GridView.builder(
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 1.0,
-      ),
-      itemCount: imageUrls.length,
-      itemBuilder: (context, index) {
-        return CachedNetworkImage(
-          imageUrl: imageUrls[index],
-          placeholder: (context, url) => CircularProgressIndicator(),
-          errorWidget: (context, url, error) => Icon(Icons.error),
-        );
-      },
-    );
+    return Scaffold(
+        appBar: AppBar(
+          title: Text("Gallery"),
+        ),
+        body: Center(
+          child: GestureDetector(
+            onScaleUpdate: (ScaleUpdateDetails details) {
+              if (_debounce?.isActive ?? false) _debounce!.cancel();
+              _debounce = Timer(const Duration(milliseconds: 100), () {
+                setState(() {
+                  if (details.scale > 1.5)
+                    numColumn++;
+                  else if (details.scale < 0.8) numColumn--;
+                  if (numColumn > maxColumn) numColumn = maxColumn;
+                  if (numColumn < minColumn) numColumn = minColumn;
+                });
+              });
+            },
+            child: AnimatedSwitcher(
+              duration: Duration(milliseconds: 200),
+              transitionBuilder: (Widget child, Animation<double> animation) {
+                return FadeTransition(opacity: animation, child: child);
+              },
+              child: GridView.builder(
+                key: ValueKey<int>(numColumn),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: numColumn,
+                  childAspectRatio: 1.0,
+                ),
+                itemCount: imageUrls.length,
+                itemBuilder: (context, index) {
+                  return GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ZoomableImage(
+                                imagePath: imageUrls[index],
+                              ),
+                            ));
+                      },
+                      child: Hero(
+                        tag: imageUrls[index],
+                        child: Image.asset(imageUrls[index]),
+                      ));
+                },
+              ),
+            ),
+          ),
+        ));
   }
 }

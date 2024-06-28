@@ -27,8 +27,8 @@ class MyHomePage extends StatelessWidget {
       length: 3,
       child: Scaffold(
         appBar: AppBar(
-          title: Text('Tabbed App'),
-          bottom: TabBar(
+          title: const Text('Tabbed App'),
+          bottom: const TabBar(
             tabs: [
               Tab(icon: Icon(Icons.contacts), text: 'Contacts'),
               Tab(icon: Icon(Icons.photo_album), text: 'Gallery'),
