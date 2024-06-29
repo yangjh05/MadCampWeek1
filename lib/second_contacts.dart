@@ -1,9 +1,8 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 
 class SecondContacts extends StatelessWidget {
+  final String number;
   final String name;
   final String book;
   final String image;
@@ -12,6 +11,7 @@ class SecondContacts extends StatelessWidget {
   final String education;
 
   SecondContacts({
+    required this.number,
     required this.name,
     required this.book,
     required this.image,
@@ -27,13 +27,9 @@ class SecondContacts extends StatelessWidget {
         slivers: [
           SliverAppBar(
             pinned: true,
-            expandedHeight: 150.0,
+            expandedHeight: 200.0,
             flexibleSpace: FlexibleSpaceBar(
-              title: Text(
-                name,
-                style: const TextStyle(
-                    color: Colors.grey, fontWeight: FontWeight.bold),
-              ),
+              title: Text(name),
               background: Image.asset(
                 image,
                 fit: BoxFit.cover,
@@ -126,15 +122,18 @@ class SecondContacts extends StatelessWidget {
           SliverList(
             delegate: SliverChildBuilderDelegate(
               (BuildContext context, int index) {
+                // 이미지 파일 경로 생성
+                final String imagePath =
+                    'assets/image/book${number}_${index + 1}.png';
                 return Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Image.asset(
-                    , // 작품 이미지 경로 예제
+                    imagePath,
                     fit: BoxFit.cover,
                   ),
                 );
               },
-              childCount: 2, // 작품의 개수
+              childCount: 2, // 작품의 개수 (예제)
             ),
           ),
         ],

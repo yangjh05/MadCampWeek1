@@ -1,5 +1,6 @@
 [
     {
+        "number": "1",
         "name": "Arthur Conan Doyle",
         "book": "⟪Sherlock Holmes⟫",
         "image": "assets/author_image/author1.jpeg",
@@ -8,6 +9,7 @@
         "education": "에든버러대학교 대학원 의학 박사"
     },
     {
+        "number": "2",
         "name": "Randall Patrick Munroe",
         "book": "⟪What If?: Serious Scientific Answers to Absurd Hypothetical Questions⟫",
         "image": "assets/author_image/author2.jpeg",
@@ -16,6 +18,7 @@
         "education": "크리스토퍼 뉴포트 대학교 물리학 학사"
     },
     {
+        "number": "3",
         "name": "J. K. Rowling",
         "book": "⟪Harry Potter⟫",
         "image": "assets/author_image/author3.jpeg",
@@ -24,6 +27,7 @@
         "education": "엑서터 대학교 불문학 · 고전학 학사"
     },
     {
+        "number": "4",
         "name": "김소월",
         "book": "⟪진달래꽃⟫",
         "image": "assets/author_image/author4.jpeg",
@@ -32,6 +36,7 @@
         "education": "도쿄상과대학 전문부 (중퇴)"
     },
     {
+        "number": "5",
         "name": "히가시노 게이고",
         "book": "⟪나미야 잡화점의 기적⟫",
         "image": "assets/author_image/author5.jpeg",
@@ -40,6 +45,7 @@
         "education": "오사카 부립 대학 전기공학부 (졸업)"
     },
     {
+        "number": "6",
         "name": "Clive Staples Lewis",
         "book": "⟪The Chronicles of Narnia⟫",
         "image": "assets/author_image/author6.jpeg",
@@ -48,6 +54,7 @@
         "education": "옥스퍼드대학교 학사"
     },
     {
+        "number": "7",
         "name": "Jared Mason Diamond",
         "book": "⟪Guns, Germs, and Steel⟫",
         "image": "assets/author_image/author7.jpeg",
@@ -56,6 +63,7 @@
         "education": "케임브리지 대학교 생리학 박사"
     },
     {
+        "number": "8",
         "name": "박완서",
         "book": "⟪그 많던 싱아는 누가 다 먹었을까⟫",
         "image": "assets/author_image/author8.jpeg",
@@ -64,6 +72,7 @@
         "education": " "
     },
     {
+        "number": "9",
         "name": "Yuval Noah Harari",
         "book": "⟪Sapiens: A Brief History of Humankind⟫",
         "image": "assets/author_image/author9.jpeg",

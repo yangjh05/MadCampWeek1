@@ -51,6 +51,7 @@ class _ContactsPageState extends State<ContactsPage> {
                               context,
                               MaterialPageRoute(
                                   builder: (context) => SecondContacts(
+                                        number: contacts[index].number,
                                         name: contacts[index].name,
                                         book: contacts[index].book,
                                         image: contacts[index].image,
@@ -66,6 +67,7 @@ class _ContactsPageState extends State<ContactsPage> {
 }
 
 class Contact {
+  final String number;
   final String name;
   final String book;
   final String image;
@@ -74,7 +76,8 @@ class Contact {
   final String education;
 
   Contact(
-      {required this.name,
+      {required this.number,
+      required this.name,
       required this.book,
       required this.image,
       required this.birth,
@@ -83,6 +86,7 @@ class Contact {
 
   factory Contact.fromJson(Map<String, dynamic> json) {
     return Contact(
+      number: json['number'],
       name: json['name'],
       book: json['book'],
       image: json['image'],
