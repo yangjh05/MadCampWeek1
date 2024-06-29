@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:js_interop';
 import 'package:flutter/material.dart';
 
 class TodaysBookPage extends StatefulWidget {
