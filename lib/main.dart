@@ -32,7 +32,7 @@ class MyHomePage extends StatelessWidget {
             tabs: [
               Tab(icon: Icon(Icons.contacts), text: 'Contacts'),
               Tab(icon: Icon(Icons.photo_album), text: 'Gallery'),
-              Tab(icon: Icon(Icons.settings), text: 'Setting'),
+              Tab(icon: Icon(Icons.book), text: "Today's book"),
             ],
           ),
         ),
@@ -40,7 +40,7 @@ class MyHomePage extends StatelessWidget {
           children: [
             ContactsPage(),
             GalleryPage(),
-            SettingPage(),
+            TodaysBookPage(),
           ],
         ),
       ),
