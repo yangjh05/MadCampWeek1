@@ -11,7 +11,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Tabbed App',
+      title: 'Bookshelf',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
@@ -27,7 +27,7 @@ class MyHomePage extends StatelessWidget {
       length: 3,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Tabbed App'),
+          title: const Text('Bookshelf'),
           bottom: const TabBar(
             tabs: [
               Tab(icon: Icon(Icons.contacts), text: 'Contacts'),

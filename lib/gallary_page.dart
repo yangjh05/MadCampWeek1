@@ -1,9 +1,7 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:flutter/widgets.dart';
-import 'package:flutterproj/contacts_page.dart';
 import 'package:vector_math/vector_math_64.dart' show Vector3;
 import 'dart:async';
 import 'package:flutter/services.dart' show rootBundle;
@@ -36,14 +34,12 @@ class FullScreenImagePage extends State<ZoomableImage> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     _scrollController.addListener(_scrollListener);
   }
 
   @override
   void dispose() {
-    // TODO: implement dispose
     _scrollController.removeListener(_scrollListener);
     _scrollController.dispose();
     super.dispose();
@@ -180,11 +176,47 @@ class _GalleryState extends State<GalleryPage> {
   Timer? _debounce;
 
   List<Book> imageUrls = [];
+  String selectedCategory = 'Title';
+  List<String> categories = ['Title', 'Author'];
+  List<Book> filteredBook = [];
+
+  TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     loadData();
+    _searchController.addListener(filterItems);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void filterItems() {
+    String searchText = _searchController.text;
+    bool isEnglish = RegExp(r'[a-zA-Z]').hasMatch(searchText);
+    List<Book> filtered = imageUrls.where((item) {
+      if (selectedCategory == 'Title') {
+        final itemLower = item.book.toLowerCase();
+        final matchesSearch = isEnglish
+            ? itemLower.contains(searchText.toLowerCase())
+            : item.book.contains(searchText);
+        return matchesSearch;
+      } else {
+        final itemLower = item.author.toLowerCase();
+        final matchesSearch = isEnglish
+            ? itemLower.contains(searchText.toLowerCase())
+            : item.author.contains(searchText);
+        return matchesSearch;
+      }
+    }).toList();
+
+    setState(() {
+      filteredBook = filtered;
+    });
   }
 
   Future<void> loadData() async {
@@ -193,6 +225,7 @@ class _GalleryState extends State<GalleryPage> {
     setState(() {
       imageUrls = List<Book>.from(data.map((item) => Book.fromJson(item)));
       imageUrls.sort((a, b) => a.book.compareTo(b.book));
+      filteredBook = imageUrls;
     });
   }
 
@@ -202,57 +235,115 @@ class _GalleryState extends State<GalleryPage> {
         appBar: AppBar(
           title: Text("Gallery"),
         ),
-        body: imageUrls.isEmpty
-            ? Center(child: CircularProgressIndicator())
-            : Center(
-                child: GestureDetector(
-                  onScaleUpdate: (ScaleUpdateDetails details) {
-                    if (_debounce?.isActive ?? false) _debounce!.cancel();
-                    _debounce = Timer(const Duration(milliseconds: 100), () {
-                      setState(() {
-                        if (details.scale > 1.5)
-                          numColumn++;
-                        else if (details.scale < 0.8) numColumn--;
-                        if (numColumn > maxColumn) numColumn = maxColumn;
-                        if (numColumn < minColumn) numColumn = minColumn;
-                      });
-                    });
-                  },
-                  child: AnimatedSwitcher(
-                    duration: Duration(milliseconds: 200),
-                    transitionBuilder:
-                        (Widget child, Animation<double> animation) {
-                      return FadeTransition(opacity: animation, child: child);
-                    },
-                    child: GridView.builder(
-                      key: ValueKey<int>(numColumn),
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: numColumn,
-                        childAspectRatio: 1.0,
-                      ),
-                      itemCount: imageUrls.length,
-                      itemBuilder: (context, index) {
-                        return GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => ZoomableImage(
-                                      imagePath: imageUrls[index].image,
-                                      book: imageUrls[index].book,
-                                      info: imageUrls[index].info,
-                                      author: imageUrls[index].author,
-                                    ),
-                                  ));
+        body: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 5.0),
+            child: imageUrls.isEmpty
+                ? Center(child: CircularProgressIndicator())
+                : Center(
+                    child: Column(children: [
+                      Row(
+                        children: [
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: TextField(
+                              controller: _searchController,
+                              decoration: InputDecoration(
+                                labelText: 'Search',
+                                prefixIcon: Icon(Icons.search),
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: 10),
+                          DropdownButton<String>(
+                            value: selectedCategory,
+                            items: categories.map((String category) {
+                              return DropdownMenuItem<String>(
+                                value: category,
+                                child: Text(category),
+                              );
+                            }).toList(),
+                            onChanged: (String? newValue) {
+                              setState(() {
+                                selectedCategory = newValue!;
+                                filterItems();
+                              });
                             },
-                            child: Hero(
-                              tag: imageUrls[index],
-                              child: Image.asset(imageUrls[index].image),
-                            ));
-                      },
-                    ),
-                  ),
-                ),
-              ));
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 16.0,
+                            ),
+                            dropdownColor: Colors.white,
+                            icon: Icon(Icons.arrow_drop_down),
+                          ),
+                          SizedBox(width: 10),
+                        ],
+                      ),
+                      SizedBox(height: 10), // 추가된 부분
+                      Expanded(
+                        // 변경된 부분
+                        child: GestureDetector(
+                          onScaleUpdate: (ScaleUpdateDetails details) {
+                            if (_debounce?.isActive ?? false)
+                              _debounce!.cancel();
+                            _debounce =
+                                Timer(const Duration(milliseconds: 100), () {
+                              setState(() {
+                                if (details.scale > 1.5)
+                                  numColumn++;
+                                else if (details.scale < 0.8) numColumn--;
+                                if (numColumn > maxColumn)
+                                  numColumn = maxColumn;
+                                if (numColumn < minColumn)
+                                  numColumn = minColumn;
+                              });
+                            });
+                          },
+                          child: AnimatedSwitcher(
+                            duration: Duration(milliseconds: 200),
+                            transitionBuilder:
+                                (Widget child, Animation<double> animation) {
+                              return FadeTransition(
+                                  opacity: animation, child: child);
+                            },
+                            child: GridView.builder(
+                              key: ValueKey<int>(numColumn),
+                              gridDelegate:
+                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: numColumn,
+                                childAspectRatio: 1.0,
+                              ),
+                              itemCount: filteredBook.length,
+                              itemBuilder: (context, index) {
+                                return GestureDetector(
+                                    onTap: () {
+                                      Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => ZoomableImage(
+                                              imagePath:
+                                                  filteredBook[index].image,
+                                              book: filteredBook[index].book,
+                                              info: filteredBook[index].info,
+                                              author:
+                                                  filteredBook[index].author,
+                                            ),
+                                          ));
+                                    },
+                                    child: Hero(
+                                      tag: filteredBook[index].image,
+                                      child: Padding(
+                                          padding: EdgeInsets.symmetric(
+                                              vertical: 2.0),
+                                          child: Image.asset(
+                                              filteredBook[index].image)),
+                                    ));
+                              },
+                            ),
+                          ),
+                        ),
+                      ),
+                    ]),
+                  )));
   }
 }

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:js_interop';
 import 'package:flutter/material.dart';
 
 class TodaysBookPage extends StatefulWidget {
@@ -34,7 +33,7 @@ class _TodaysBookPageState extends State<TodaysBookPage> {
   ];
 
   void _startSlideshow() {
-    _timer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
+    _timer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
       setState(() {
         _currentBookIndex = (_currentBookIndex + 1) % _bookImages.length;
       });
@@ -57,6 +56,7 @@ class _TodaysBookPageState extends State<TodaysBookPage> {
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          SizedBox(height: 20),
           Text(
             "Today's Book",
             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
@@ -64,13 +64,17 @@ class _TodaysBookPageState extends State<TodaysBookPage> {
           SizedBox(height: 20),
           Expanded(
             child: Center(
-              child: Image.asset(
-                _bookImages[_currentBookIndex],
-                fit: BoxFit.cover,
+              child: Container(
+                width: MediaQuery.of(context).size.width * 0.7,
+                height: 400,
+                child: Image.asset(
+                  _bookImages[_currentBookIndex],
+                  fit: BoxFit.fill,
+                ),
               ),
             ),
           ),
-          SizedBox(height: 20),
+          SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
