@@ -28,8 +28,19 @@ class SecondContacts extends StatelessWidget {
           SliverAppBar(
             pinned: true,
             expandedHeight: 200.0,
+            backgroundColor: Color.fromARGB(255, 176, 183, 187),
             flexibleSpace: FlexibleSpaceBar(
-              title: Text(name),
+              title: Align(
+                alignment: Alignment.bottomRight,
+                child: AutoSizeText(
+                  name,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, color: Colors.white),
+                  maxLines: 1,
+                  minFontSize: 10,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
               background: Image.asset(
                 image,
                 fit: BoxFit.cover,
@@ -38,7 +49,8 @@ class SecondContacts extends StatelessWidget {
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding:
+                  const EdgeInsets.only(top: 16.0, left: 16.0, right: 16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -74,30 +86,36 @@ class SecondContacts extends StatelessWidget {
                               AutoSizeText.rich(
                                 textAlign: TextAlign.left,
                                 TextSpan(children: [
-                                  TextSpan(
+                                  const TextSpan(
                                     text: "| 출생   ",
                                     style: TextStyle(
-                                        fontSize: 20.0, color: Colors.black),
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 20.0,
+                                        color: Colors.black),
                                   ),
                                   TextSpan(
                                     text: birth,
                                     style: TextStyle(
                                         fontSize: 20.0, color: Colors.grey),
                                   ),
-                                  TextSpan(
+                                  const TextSpan(
                                     text: "\n| 국적   ",
                                     style: TextStyle(
-                                        fontSize: 20.0, color: Colors.black),
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 20.0,
+                                        color: Colors.black),
                                   ),
                                   TextSpan(
                                     text: nation,
                                     style: TextStyle(
                                         fontSize: 20.0, color: Colors.grey),
                                   ),
-                                  TextSpan(
+                                  const TextSpan(
                                     text: "\n| 학력   ",
                                     style: TextStyle(
-                                        fontSize: 20.0, color: Colors.black),
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 20.0,
+                                        color: Colors.black),
                                   ),
                                   TextSpan(
                                     text: education,
@@ -109,6 +127,24 @@ class SecondContacts extends StatelessWidget {
                                 minFontSize: 10,
                                 overflow: TextOverflow.ellipsis,
                               ),
+                              SizedBox(height: 16),
+                              Container(
+                                  width: MediaQuery.of(context).size.width,
+                                  margin: EdgeInsets.only(top: 10.0),
+                                  padding: EdgeInsets.only(bottom: 10.0),
+                                  decoration: const BoxDecoration(
+                                      border: Border(
+                                          bottom: BorderSide(
+                                              color: Color.fromARGB(
+                                                  31, 80, 78, 78),
+                                              width: 2))),
+                                  child: const Text(
+                                    "\n대표작품",
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 20.0),
+                                  )),
                             ],
                           ),
                         ),
