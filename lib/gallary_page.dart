@@ -114,36 +114,39 @@ class FullScreenImagePage extends State<ZoomableImage> {
     return Scaffold(
         backgroundColor: Colors.black,
         body: Center(
-          child: SingleChildScrollView(
-            controller: _scrollController,
-            child: GestureDetector(
-              onVerticalDragUpdate: (details) {
-                if (details.primaryDelta! < 0) {
-                  _scrollListener();
-                }
-              },
-              onTap: () {
-                Navigator.pop(context);
-              },
-              onDoubleTapDown: (TapDownDetails details) {
-                if (_transformationController.value.getMaxScaleOnAxis() < 2.5)
-                  _zoomAtPosition(details, 2.5);
-                else
-                  _zoomAtPosition(details, 1.0);
-              },
-              child: Hero(
-                tag: imagePath,
-                child: InteractiveViewer(
-                  transformationController: _transformationController,
-                  boundaryMargin: EdgeInsets.all(20.0),
-                  minScale: 0.1,
-                  maxScale: 4.0,
-                  child: Image.asset(imagePath),
+            child: SingleChildScrollView(
+          controller: _scrollController,
+          child: GestureDetector(
+            onVerticalDragUpdate: (details) {
+              if (details.primaryDelta! < 0) {
+                _scrollListener();
+              }
+            },
+            onTap: () {
+              Navigator.pop(context);
+            },
+            onDoubleTapDown: (TapDownDetails details) {
+              if (_transformationController.value.getMaxScaleOnAxis() < 2.5)
+                _zoomAtPosition(details, 2.5);
+              else
+                _zoomAtPosition(details, 1.0);
+            },
+            child: Hero(
+              tag: imagePath,
+              child: InteractiveViewer(
+                transformationController: _transformationController,
+                boundaryMargin: EdgeInsets.all(20.0),
+                minScale: 0.1,
+                maxScale: 4.0,
+                child: Image.asset(
+                  imagePath,
+                  fit: BoxFit.contain, // 변경된 부분
+                  width: MediaQuery.of(context).size.width * 0.9, // 변경된 부분
                 ),
               ),
             ),
           ),
-        ));
+        )));
   }
 }
 
@@ -336,7 +339,8 @@ class _GalleryState extends State<GalleryPage> {
                                           padding: EdgeInsets.symmetric(
                                               vertical: 2.0),
                                           child: Image.asset(
-                                              filteredBook[index].image)),
+                                              filteredBook[index].image,
+                                              fit: BoxFit.cover)),
                                     ));
                               },
                             ),
