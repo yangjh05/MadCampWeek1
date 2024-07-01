@@ -2,6 +2,10 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:io';
+import 'package:flutter/widgets.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:flutter/services.dart' show rootBundle;
 
 class TodaysBookPage extends StatefulWidget {
   const TodaysBookPage({super.key});
@@ -15,12 +19,51 @@ class _TodaysBookPageState extends State<TodaysBookPage> {
   Timer? _timer;
   List<String> _bookImages = [];
 
+  Widget displayImage(String imagePath) {
+    if (!imagePath.startsWith('assets/')) {
+      return Image.file(
+        File(imagePath),
+        fit: BoxFit.fill,
+      );
+    } else if (imagePath.startsWith('assets/')) {
+      return Image.asset(
+        imagePath,
+        fit: BoxFit.fill,
+      );
+    } else {
+      return Center(
+        child: Text('Invalid image path'),
+      );
+    }
+  }
+
   Future<void> loadData() async {
-    final String response = await rootBundle.loadString('assets/books.json');
-    final List<dynamic> data = json.decode(response);
-    setState(() {
-      _bookImages = data.map((item) => item['image'] as String).toList();
-    });
+    try {
+      Directory documentsDirectory = await getApplicationDocumentsDirectory();
+      String jsonFilePath = '${documentsDirectory.path}/books.json';
+
+      File jsonFile = File(jsonFilePath);
+      String response;
+
+      if (await jsonFile.exists()) {
+        // 문서 디렉토리에서 JSON 파일 읽기
+        response = await jsonFile.readAsString();
+        print("Read from DB");
+      } else {
+        // assets 폴더에서 JSON 파일 읽기
+        print("Read from assets");
+        response = await rootBundle.loadString('assets/books.json');
+        // JSON 파일을 문서 디렉토리에 저장
+        await jsonFile.writeAsString(response);
+      }
+
+      final List<dynamic> data = json.decode(response);
+      setState(() {
+        _bookImages = data.map((item) => item['image'] as String).toList();
+      });
+    } catch (e) {
+      print("Error loading data: $e");
+    }
   }
 
   @override
@@ -68,10 +111,7 @@ class _TodaysBookPageState extends State<TodaysBookPage> {
                   Container(
                     width: MediaQuery.of(context).size.width * 0.7,
                     height: 400,
-                    child: Image.asset(
-                      _bookImages[_currentBookIndex],
-                      fit: BoxFit.fill,
-                    ),
+                    child: displayImage(_bookImages[_currentBookIndex]),
                   ),
                   SizedBox(height: 20),
                   Row(

@@ -5,8 +5,10 @@ import 'package:flutter/widgets.dart';
 import 'package:vector_math/vector_math_64.dart' show Vector3;
 import 'package:path_provider/path_provider.dart';
 import 'dart:async';
-import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter/services.dart' show ByteData, rootBundle;
 import 'add_book_page.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:path/path.dart' as p;
 
 class ZoomableImage extends StatefulWidget {
   final String imagePath, author, info, book;
@@ -89,6 +91,22 @@ class FullScreenImagePage extends State<ZoomableImage> {
     }
   }
 
+  Widget displayImage(String imagePath) {
+    if (!imagePath.startsWith('assets/')) {
+      return Image.file(File(imagePath),
+          fit: BoxFit.contain, // 변경된 부분
+          width: MediaQuery.of(context).size.width * 0.9);
+    } else if (imagePath.startsWith('assets/')) {
+      return Image.asset(imagePath,
+          fit: BoxFit.contain, // 변경된 부분
+          width: MediaQuery.of(context).size.width * 0.9);
+    } else {
+      return Center(
+        child: Text('Invalid image path'),
+      );
+    }
+  }
+
   void _zoomAtPosition(TapDownDetails details, double scale) {
     setState(() {
       final Matrix4 transform = _transformationController.value.clone();
@@ -140,11 +158,7 @@ class FullScreenImagePage extends State<ZoomableImage> {
                 boundaryMargin: EdgeInsets.all(20.0),
                 minScale: 0.1,
                 maxScale: 4.0,
-                child: Image.asset(
-                  imagePath,
-                  fit: BoxFit.contain, // 변경된 부분
-                  width: MediaQuery.of(context).size.width * 0.9, // 변경된 부분
-                ),
+                child: displayImage(imagePath),
               ),
             ),
           ),
@@ -159,19 +173,32 @@ class GalleryPage extends StatefulWidget {
 
 class Book {
   final String book, image, info, author;
+  final int ID;
 
   Book(
-      {required this.book,
+      {required this.ID,
+      required this.book,
       required this.image,
       required this.info,
       required this.author});
 
   factory Book.fromJson(Map<String, dynamic> json) {
     return Book(
+        ID: json['ID'],
         author: json['author'],
         book: json['book'],
         image: json['image'],
         info: json['info']);
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'ID': ID,
+      'author': author,
+      'book': book,
+      'image': image,
+      'info': info,
+    };
   }
 }
 
@@ -184,6 +211,8 @@ class _GalleryState extends State<GalleryPage> {
   String selectedCategory = 'Title';
   List<String> categories = ['Title', 'Author'];
   List<Book> filteredBook = [];
+  Set<Book> _selectedBooks = Set<Book>();
+  bool _isDeleteMode = false;
 
   TextEditingController _searchController = TextEditingController();
 
@@ -247,11 +276,72 @@ class _GalleryState extends State<GalleryPage> {
       final data = json.decode(response);
       setState(() {
         imageUrls = List<Book>.from(data.map((item) => Book.fromJson(item)));
-        imageUrls.sort((a, b) => a.book.compareTo(b.book));
+        imageUrls.sort((a, b) => a.ID.compareTo(b.ID));
         filteredBook = imageUrls;
       });
     } catch (e) {
       print("Error loading data: $e");
+    }
+  }
+
+  void _toggleDeleteMode() {
+    setState(() {
+      _isDeleteMode = !_isDeleteMode;
+      if (!_isDeleteMode) {
+        _selectedBooks.clear();
+      }
+    });
+  }
+
+  void _deleteSelectedBooks() async {
+    // 선택된 책들의 ID 목록을 가져옵니다.
+    List<int> selectedIds = _selectedBooks.map((book) => book.ID).toList();
+
+    setState(() {
+      imageUrls.removeWhere((book) => _selectedBooks.contains(book));
+      filteredBook.removeWhere((book) => _selectedBooks.contains(book));
+      _selectedBooks.clear();
+      _isDeleteMode = false;
+    });
+
+    // JSON 파일에 저장
+    Directory documentsDirectory = await getApplicationDocumentsDirectory();
+    String jsonFilePath = '${documentsDirectory.path}/books.json';
+    File jsonFile = File(jsonFilePath);
+    String jsonString = jsonEncode(imageUrls);
+    await jsonFile.writeAsString(jsonString);
+
+    // 데이터베이스에서 삭제
+    try {
+      String dbPath = p.join(documentsDirectory.path, 'book.db');
+      Database db = await openDatabase(dbPath, version: 1);
+
+      // 데이터베이스에서 선택된 책들을 삭제
+      for (int id in selectedIds) {
+        await db.delete('Book', where: 'id = ?', whereArgs: [id]);
+      }
+
+      print('Selected books deleted from database.');
+    } catch (e) {
+      print("Error deleting books from database: $e");
+    }
+  }
+
+  Widget displayImage(String imagePath) {
+    if (!imagePath.startsWith('assets/')) {
+      return Image.file(
+        File(imagePath),
+        fit: BoxFit.cover,
+      );
+    } else if (imagePath.startsWith('assets/')) {
+      return Image.asset(
+        imagePath,
+        fit: BoxFit.cover,
+      );
+    } else {
+      return Center(
+        child: Text('Invalid image path'),
+      );
     }
   }
 
@@ -260,6 +350,11 @@ class _GalleryState extends State<GalleryPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text("Gallery"),
+        actions: [
+          if (_isDeleteMode)
+            IconButton(
+                onPressed: _deleteSelectedBooks, icon: Icon(Icons.delete))
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -339,29 +434,52 @@ class _GalleryState extends State<GalleryPage> {
                           itemCount: filteredBook.length,
                           itemBuilder: (context, index) {
                             return GestureDetector(
-                                onTap: () {
-                                  Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => ZoomableImage(
-                                          imagePath: filteredBook[index].image,
-                                          book: filteredBook[index].book,
-                                          info: filteredBook[index].info,
-                                          author: filteredBook[index].author,
-                                        ),
-                                      ));
-                                },
-                                child: Hero(
-                                  tag: filteredBook[index].image,
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 2.0),
-                                    child: Image.asset(
-                                      filteredBook[index].image,
-                                      fit: BoxFit.cover,
+                              onTap: () {
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => ZoomableImage(
+                                        imagePath: filteredBook[index].image,
+                                        book: filteredBook[index].book,
+                                        info: filteredBook[index].info,
+                                        author: filteredBook[index].author,
+                                      ),
+                                    ));
+                              },
+                              child: Stack(
+                                children: [
+                                  Hero(
+                                    tag: filteredBook[index].image,
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 2.0),
+                                      child: displayImage(
+                                          filteredBook[index].image),
                                     ),
                                   ),
-                                ));
+                                  if (_isDeleteMode)
+                                    Positioned(
+                                      top: 0,
+                                      right: 0,
+                                      child: Checkbox(
+                                        value: _selectedBooks
+                                            .contains(filteredBook[index]),
+                                        onChanged: (bool? value) {
+                                          setState(() {
+                                            if (value == true) {
+                                              _selectedBooks
+                                                  .add(filteredBook[index]);
+                                            } else {
+                                              _selectedBooks
+                                                  .remove(filteredBook[index]);
+                                            }
+                                          });
+                                        },
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            );
                           },
                         ),
                       ),
@@ -372,10 +490,84 @@ class _GalleryState extends State<GalleryPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 ElevatedButton(
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => BookAdd()),
-                  ),
+                  onPressed: () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => BookAdd()),
+                    );
+
+                    // pop 후에 수행할 작업
+                    print("Reloading!!!");
+                    // 애플리케이션 문서 디렉토리 경로 가져오기
+                    Directory documentsDirectory =
+                        await getApplicationDocumentsDirectory();
+                    String dbPath = p.join(documentsDirectory.path, 'book.db');
+
+                    // assets 폴더에서 데이터베이스 파일을 복사
+                    ByteData data =
+                        await rootBundle.load('assets/database/book.db');
+                    List<int> bytes = data.buffer
+                        .asUint8List(data.offsetInBytes, data.lengthInBytes);
+                    File dbFile = File(dbPath);
+                    if (!(await dbFile.exists())) {
+                      await dbFile.writeAsBytes(bytes, flush: true);
+                      print('Database copied to ${dbFile.path}');
+                    }
+
+                    // 데이터베이스 연결
+                    Database db = await openDatabase(dbPath, version: 1);
+
+                    // 데이터베이스에서 데이터 읽기
+                    List<Map<String, dynamic>> bookList =
+                        await db.query('Book');
+
+                    // JSON 데이터로 변환
+                    String jsonString = jsonEncode(bookList);
+
+                    // JSON 파일 경로 설정
+                    String jsonFilePath =
+                        p.join(documentsDirectory.path, 'books.json');
+
+                    // JSON 파일에 저장
+                    File jsonFile = File(jsonFilePath);
+                    await jsonFile.writeAsString(jsonString);
+
+                    print('Data saved to JSON file: $jsonFilePath');
+
+                    try {
+                      Directory documentsDirectory =
+                          await getApplicationDocumentsDirectory();
+                      String jsonFilePath =
+                          '${documentsDirectory.path}/books.json';
+
+                      File jsonFile = File(jsonFilePath);
+                      String response;
+
+                      if (await jsonFile.exists()) {
+                        // 문서 디렉토리에서 JSON 파일 읽기
+                        response = await jsonFile.readAsString();
+                        print("Read from DB");
+                      } else {
+                        // assets 폴더에서 JSON 파일 읽기
+                        print("Read from assets");
+                        response =
+                            await rootBundle.loadString('assets/books.json');
+                        // JSON 파일을 문서 디렉토리에 저장
+                        await jsonFile.writeAsString(response);
+                      }
+
+                      final data = json.decode(response);
+                      setState(() {
+                        imageUrls = List<Book>.from(
+                            data.map((item) => Book.fromJson(item)));
+                        imageUrls.sort((a, b) => a.book.compareTo(b.book));
+                        filteredBook = imageUrls;
+                        filterItems();
+                      });
+                    } catch (e) {
+                      print("Error loading data: $e");
+                    }
+                  },
                   child: Text('Add Book..'),
                   style: ElevatedButton.styleFrom(
                     minimumSize: Size(100, 40), // 버튼 크기 지정
@@ -385,10 +577,8 @@ class _GalleryState extends State<GalleryPage> {
                 ),
                 SizedBox(width: 10), // 버튼 사이의 간격
                 ElevatedButton(
-                  onPressed: () {
-                    // 버튼 2 클릭 시 동작
-                  },
-                  child: Text('Delete Book'),
+                  onPressed: _toggleDeleteMode,
+                  child: Text(_isDeleteMode ? 'Cancel' : 'Delete Book'),
                   style: ElevatedButton.styleFrom(
                     minimumSize: Size(100, 40), // 버튼 크기 지정
                     padding: EdgeInsets.symmetric(
