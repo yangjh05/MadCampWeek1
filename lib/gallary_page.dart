@@ -273,7 +273,9 @@ class _GalleryState extends State<GalleryPage> {
                     decoration: InputDecoration(
                       labelText: 'Search',
                       prefixIcon: Icon(Icons.search),
-                      border: OutlineInputBorder(),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.0),
+                      ),
                     ),
                   ),
                 ),
