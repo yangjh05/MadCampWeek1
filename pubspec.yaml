@@ -68,6 +68,7 @@ flutter:
       - assets/books.json
       - assets/image/
       - assets/author_image/
+      - assets/database/book.db
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

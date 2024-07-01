@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:flutter/widgets.dart';
 import 'package:vector_math/vector_math_64.dart' show Vector3;
+import 'package:path_provider/path_provider.dart';
 import 'dart:async';
 import 'package:flutter/services.dart' show rootBundle;
 import 'add_book_page.dart';
@@ -224,13 +225,34 @@ class _GalleryState extends State<GalleryPage> {
   }
 
   Future<void> loadData() async {
-    final String response = await rootBundle.loadString('assets/books.json');
-    final data = json.decode(response);
-    setState(() {
-      imageUrls = List<Book>.from(data.map((item) => Book.fromJson(item)));
-      imageUrls.sort((a, b) => a.book.compareTo(b.book));
-      filteredBook = imageUrls;
-    });
+    try {
+      Directory documentsDirectory = await getApplicationDocumentsDirectory();
+      String jsonFilePath = '${documentsDirectory.path}/books.json';
+
+      File jsonFile = File(jsonFilePath);
+      String response;
+
+      if (await jsonFile.exists()) {
+        // 문서 디렉토리에서 JSON 파일 읽기
+        response = await jsonFile.readAsString();
+        print("Read from DB");
+      } else {
+        // assets 폴더에서 JSON 파일 읽기
+        print("Read from assets");
+        response = await rootBundle.loadString('assets/books.json');
+        // JSON 파일을 문서 디렉토리에 저장
+        await jsonFile.writeAsString(response);
+      }
+
+      final data = json.decode(response);
+      setState(() {
+        imageUrls = List<Book>.from(data.map((item) => Book.fromJson(item)));
+        imageUrls.sort((a, b) => a.book.compareTo(b.book));
+        filteredBook = imageUrls;
+      });
+    } catch (e) {
+      print("Error loading data: $e");
+    }
   }
 
   @override
