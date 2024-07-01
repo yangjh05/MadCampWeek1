@@ -78,8 +78,7 @@ class _ContactsPageState extends State<ContactsPage> {
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12.0),
                             ),
-                            filled: true,
-                            fillColor: Colors.grey[200],
+                            filled: false,
                           ),
                         ),
                         SizedBox(height: 16),

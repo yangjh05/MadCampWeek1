@@ -399,7 +399,7 @@ class _GalleryState extends State<GalleryPage> {
                 SizedBox(width: 10),
               ],
             ),
-            SizedBox(height: 10),
+            SizedBox(height: 20),
             Expanded(
               child: imageUrls.isEmpty
                   ? Center(child: CircularProgressIndicator())
@@ -570,19 +570,27 @@ class _GalleryState extends State<GalleryPage> {
                   },
                   child: Text('Add Book..'),
                   style: ElevatedButton.styleFrom(
+                    foregroundColor: Color.fromARGB(255, 0, 0, 0),
                     minimumSize: Size(100, 40), // 버튼 크기 지정
                     padding: EdgeInsets.symmetric(
                         horizontal: 16, vertical: 8), // 버튼 내부 패딩
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
                   ),
                 ),
-                SizedBox(width: 10), // 버튼 사이의 간격
+                SizedBox(width: 20), // 버튼 사이의 간격
                 ElevatedButton(
                   onPressed: _toggleDeleteMode,
                   child: Text(_isDeleteMode ? 'Cancel' : 'Delete Book'),
                   style: ElevatedButton.styleFrom(
+                    foregroundColor: Color.fromARGB(255, 0, 0, 0),
                     minimumSize: Size(100, 40), // 버튼 크기 지정
                     padding: EdgeInsets.symmetric(
                         horizontal: 16, vertical: 8), // 버튼 내부 패딩
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
                   ),
                 ),
               ],
