@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:vector_math/vector_math_64.dart' show Vector3;
 import 'dart:async';
 import 'package:flutter/services.dart' show rootBundle;
+import 'add_book_page.dart';
 
 class ZoomableImage extends StatefulWidget {
   final String imagePath, author, info, book;
@@ -235,119 +236,146 @@ class _GalleryState extends State<GalleryPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Text("Gallery"),
-        ),
-        body: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 5.0),
-            child: imageUrls.isEmpty
-                ? Center(child: CircularProgressIndicator())
-                : Center(
-                    child: Column(children: [
-                      Row(
-                        children: [
-                          SizedBox(width: 10),
-                          Expanded(
-                            child: TextField(
-                              controller: _searchController,
-                              decoration: InputDecoration(
-                                labelText: 'Search',
-                                prefixIcon: Icon(Icons.search),
-                                border: OutlineInputBorder(),
-                              ),
-                            ),
+      appBar: AppBar(
+        title: Text("Gallery"),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      labelText: 'Search',
+                      prefixIcon: Icon(Icons.search),
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+                SizedBox(width: 10),
+                DropdownButton<String>(
+                  value: selectedCategory,
+                  items: categories.map((String category) {
+                    return DropdownMenuItem<String>(
+                      value: category,
+                      child: Text(category),
+                    );
+                  }).toList(),
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      selectedCategory = newValue!;
+                      filterItems();
+                    });
+                  },
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 16.0,
+                  ),
+                  dropdownColor: Colors.white,
+                  icon: Icon(Icons.arrow_drop_down),
+                ),
+                SizedBox(width: 10),
+              ],
+            ),
+            SizedBox(height: 10),
+            Expanded(
+              child: imageUrls.isEmpty
+                  ? Center(child: CircularProgressIndicator())
+                  : GestureDetector(
+                      onScaleUpdate: (ScaleUpdateDetails details) {
+                        if (_debounce?.isActive ?? false) _debounce!.cancel();
+                        _debounce =
+                            Timer(const Duration(milliseconds: 100), () {
+                          setState(() {
+                            if (details.scale > 1.5)
+                              numColumn++;
+                            else if (details.scale < 0.8) numColumn--;
+                            if (numColumn > maxColumn) numColumn = maxColumn;
+                            if (numColumn < minColumn) numColumn = minColumn;
+                          });
+                        });
+                      },
+                      child: AnimatedSwitcher(
+                        duration: Duration(milliseconds: 200),
+                        transitionBuilder:
+                            (Widget child, Animation<double> animation) {
+                          return FadeTransition(
+                              opacity: animation, child: child);
+                        },
+                        child: GridView.builder(
+                          key: ValueKey<int>(numColumn),
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: numColumn,
+                            childAspectRatio: 1.0,
                           ),
-                          SizedBox(width: 10),
-                          DropdownButton<String>(
-                            value: selectedCategory,
-                            items: categories.map((String category) {
-                              return DropdownMenuItem<String>(
-                                value: category,
-                                child: Text(category),
-                              );
-                            }).toList(),
-                            onChanged: (String? newValue) {
-                              setState(() {
-                                selectedCategory = newValue!;
-                                filterItems();
-                              });
-                            },
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 16.0,
-                            ),
-                            dropdownColor: Colors.white,
-                            icon: Icon(Icons.arrow_drop_down),
-                          ),
-                          SizedBox(width: 10),
-                        ],
-                      ),
-                      SizedBox(height: 10), // 추가된 부분
-                      Expanded(
-                        // 변경된 부분
-                        child: GestureDetector(
-                          onScaleUpdate: (ScaleUpdateDetails details) {
-                            if (_debounce?.isActive ?? false)
-                              _debounce!.cancel();
-                            _debounce =
-                                Timer(const Duration(milliseconds: 100), () {
-                              setState(() {
-                                if (details.scale > 1.5)
-                                  numColumn++;
-                                else if (details.scale < 0.8) numColumn--;
-                                if (numColumn > maxColumn)
-                                  numColumn = maxColumn;
-                                if (numColumn < minColumn)
-                                  numColumn = minColumn;
-                              });
-                            });
+                          itemCount: filteredBook.length,
+                          itemBuilder: (context, index) {
+                            return GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => ZoomableImage(
+                                          imagePath: filteredBook[index].image,
+                                          book: filteredBook[index].book,
+                                          info: filteredBook[index].info,
+                                          author: filteredBook[index].author,
+                                        ),
+                                      ));
+                                },
+                                child: Hero(
+                                  tag: filteredBook[index].image,
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 2.0),
+                                    child: Image.asset(
+                                      filteredBook[index].image,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                ));
                           },
-                          child: AnimatedSwitcher(
-                            duration: Duration(milliseconds: 200),
-                            transitionBuilder:
-                                (Widget child, Animation<double> animation) {
-                              return FadeTransition(
-                                  opacity: animation, child: child);
-                            },
-                            child: GridView.builder(
-                              key: ValueKey<int>(numColumn),
-                              gridDelegate:
-                                  SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: numColumn,
-                                childAspectRatio: 1.0,
-                              ),
-                              itemCount: filteredBook.length,
-                              itemBuilder: (context, index) {
-                                return GestureDetector(
-                                    onTap: () {
-                                      Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) => ZoomableImage(
-                                              imagePath:
-                                                  filteredBook[index].image,
-                                              book: filteredBook[index].book,
-                                              info: filteredBook[index].info,
-                                              author:
-                                                  filteredBook[index].author,
-                                            ),
-                                          ));
-                                    },
-                                    child: Hero(
-                                      tag: filteredBook[index].image,
-                                      child: Padding(
-                                          padding: EdgeInsets.symmetric(
-                                              vertical: 2.0),
-                                          child: Image.asset(
-                                              filteredBook[index].image,
-                                              fit: BoxFit.cover)),
-                                    ));
-                              },
-                            ),
-                          ),
                         ),
                       ),
-                    ]),
-                  )));
+                    ),
+            ),
+            SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => BookAdd()),
+                  ),
+                  child: Text('Add Book..'),
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: Size(100, 40), // 버튼 크기 지정
+                    padding: EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 8), // 버튼 내부 패딩
+                  ),
+                ),
+                SizedBox(width: 10), // 버튼 사이의 간격
+                ElevatedButton(
+                  onPressed: () {
+                    // 버튼 2 클릭 시 동작
+                  },
+                  child: Text('Delete Book'),
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: Size(100, 40), // 버튼 크기 지정
+                    padding: EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 8), // 버튼 내부 패딩
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
