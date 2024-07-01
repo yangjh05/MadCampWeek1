@@ -104,7 +104,7 @@ class _TodaysBookPageState extends State<TodaysBookPage> {
                   Spacer(),
                   Text(
                     "Today's Book",
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 34, fontWeight: FontWeight.bold),
                     textAlign: TextAlign.center,
                   ),
                   SizedBox(height: 20),

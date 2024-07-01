@@ -24,11 +24,26 @@ class SecondContacts extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: CustomScrollView(
-        slivers: [
+        slivers: <Widget>[
           SliverAppBar(
             pinned: true,
             expandedHeight: 200.0,
             backgroundColor: Color.fromARGB(255, 176, 183, 187),
+            stretch: true,
+            onStretchTrigger: () async {
+              AnimatedContainer(
+                duration: Duration(milliseconds: 500),
+                curve: Curves.easeInOut,
+                width: 300,
+                height: 500,
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage(image), // 배경 이미지 파일 경로
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              );
+            },
             flexibleSpace: FlexibleSpaceBar(
               title: Align(
                 alignment: Alignment.bottomRight,
@@ -45,6 +60,10 @@ class SecondContacts extends StatelessWidget {
                 image,
                 fit: BoxFit.cover,
               ),
+              stretchModes: [
+                StretchMode.zoomBackground,
+                StretchMode.fadeTitle,
+              ],
             ),
           ),
           SliverToBoxAdapter(
@@ -79,7 +98,7 @@ class SecondContacts extends StatelessWidget {
                         SizedBox(height: 5),
                         Container(
                           width: MediaQuery.of(context).size.width,
-                          margin: EdgeInsets.all(20.0),
+                          margin: const EdgeInsets.all(20.0),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
