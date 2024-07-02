@@ -14,12 +14,15 @@ class TodaysBookPage extends StatefulWidget {
   _TodaysBookPageState createState() => _TodaysBookPageState();
 }
 
-class _TodaysBookPageState extends State<TodaysBookPage> {
+class _TodaysBookPageState extends State<TodaysBookPage>
+    with TickerProviderStateMixin {
   int _currentBookIndex = -1;
   Timer? _timer;
   List<String> _bookImages = [];
   List<String> _bookTitle = [];
   List<String> _bookInfo = [];
+  late AnimationController _fadeController;
+  late Animation<double> _fadeAnimation;
 
   Widget displayImage(String imagePath) {
     if (_currentBookIndex == -1) {
@@ -83,6 +86,19 @@ class _TodaysBookPageState extends State<TodaysBookPage> {
   void initState() {
     super.initState();
     loadData();
+
+    _fadeController = AnimationController(
+      duration: const Duration(seconds: 1),
+      vsync: this,
+    );
+
+    _fadeAnimation =
+        Tween<double>(begin: 1.0, end: 0.0).animate(_fadeController)
+          ..addStatusListener((status) {
+            if (status == AnimationStatus.completed) {
+              _fadeController.reverse();
+            }
+          });
   }
 
   void _startSlideshow() {
@@ -100,47 +116,59 @@ class _TodaysBookPageState extends State<TodaysBookPage> {
   void _stopSlideshow() {
     _timer?.cancel();
     _timer = null;
-    if (_currentBookIndex != -1) {
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return Dialog(
-            backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20.0),
-            ),
-            child: Stack(
-              children: [
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(20.0),
-                      child: Column(
-                        children: [
-                          Container(
-                            child: Padding(
-                              padding: EdgeInsets.only(bottom: 10),
-                              child: Image.asset(
-                                'assets/icon.png',
-                                width: 50,
-                                height: 50,
-                              ),
+
+    if (_currentBookIndex != -1 && _fadeController != null) {
+      _fadeController.forward(from: 0.0);
+      _fadeController.addStatusListener((status) {
+        if (status == AnimationStatus.dismissed) {
+          _showPopup();
+        }
+      });
+    } else {
+      _showAlert();
+    }
+  }
+
+  void _showPopup() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.0),
+          ),
+          child: Stack(
+            children: [
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Column(
+                      children: [
+                        Container(
+                          child: Padding(
+                            padding: EdgeInsets.only(bottom: 10),
+                            child: Image.asset(
+                              'assets/icon.png',
+                              width: 50,
+                              height: 50,
                             ),
                           ),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Colors.black,
-                              borderRadius: BorderRadius.circular(16.0),
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: Colors.black26,
-                                  blurRadius: 10.0,
-                                  offset: Offset(0, 10),
-                                ),
-                              ],
+                        ),
+                        Stack(
+                          children: [
+                            FadeTransition(
+                              opacity: _fadeAnimation,
+                              child: Image.network(
+                                'https://your-web-image-url.com/image.jpg',
+                                width: 150,
+                                height: 200,
+                                fit: BoxFit.cover,
+                              ),
                             ),
-                            child: Image.asset(
+                            Image.asset(
                               _currentBookIndex != -1
                                   ? _bookImages[_currentBookIndex]
                                   : 'assets/no_image.png',
@@ -148,81 +176,84 @@ class _TodaysBookPageState extends State<TodaysBookPage> {
                               height: 200,
                               fit: BoxFit.cover,
                             ),
+                          ],
+                        ),
+                        CustomPaint(
+                          size: Size(300, 10),
+                          painter: TrapezoidPainter(),
+                        ),
+                        Container(
+                          width: 300,
+                          height: 15,
+                          color: Color.fromARGB(255, 205, 193, 175),
+                        ),
+                        const SizedBox(height: 30),
+                        Text(
+                          _currentBookIndex != -1
+                              ? _bookTitle[_currentBookIndex]
+                              : '',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
                           ),
-                          CustomPaint(
-                            size: Size(300, 10),
-                            painter: TrapezoidPainter(),
-                          ),
-                          Container(
-                            width: 300,
-                            height: 15,
-                            color: Color.fromARGB(255, 205, 193, 175),
-                          ),
-                          const SizedBox(height: 30),
-                          Text(
-                            _currentBookIndex != -1
-                                ? _bookTitle[_currentBookIndex]
-                                : '',
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          SizedBox(height: 15),
-                          Text(
-                            _currentBookIndex != -1
-                                ? _bookInfo[_currentBookIndex]
-                                : '',
-                            textAlign: TextAlign.justify,
-                            style: TextStyle(fontSize: 16),
-                          ),
-                        ],
-                      ),
+                        ),
+                        SizedBox(height: 15),
+                        Text(
+                          _currentBookIndex != -1
+                              ? _bookInfo[_currentBookIndex]
+                              : '',
+                          textAlign: TextAlign.justify,
+                          style: TextStyle(fontSize: 16),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                Positioned(
-                  right: 0.0,
-                  child: IconButton(
-                    icon: Icon(Icons.close),
-                    onPressed: () {
-                      setState(() {
-                        _currentBookIndex = -1;
-                      });
-                      Navigator.of(context).pop();
-                    },
                   ),
-                ),
-              ],
-            ),
-          );
-        },
-      );
-    } else {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          actionsPadding: EdgeInsets.only(top: 5, bottom: 1),
-          title: const Text('Press the start button first'),
-          actions: [
-            Center(
-              child: TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                child: const Text('OK'),
+                ],
               ),
+              Positioned(
+                right: 0.0,
+                child: IconButton(
+                  icon: Icon(Icons.close),
+                  onPressed: () {
+                    setState(() {
+                      _currentBookIndex = -1;
+                    });
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showAlert() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        actionsPadding: EdgeInsets.only(top: 5, bottom: 1),
+        title: const Text('Press the start button first'),
+        actions: [
+          Center(
+            child: TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('OK'),
             ),
-          ],
-        ),
-      );
-    }
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    _fadeController.dispose();
     super.dispose();
   }
 
