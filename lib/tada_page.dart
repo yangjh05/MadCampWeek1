@@ -22,7 +22,7 @@ class _TadaPageState extends State<TadaPage> {
   }
 
   void _startFadeOut() {
-    Future.delayed(Duration(seconds: 3), () {
+    Future.delayed(Duration(seconds: 1), () {
       setState(() {
         _showBookImage = true;
       });
@@ -103,16 +103,20 @@ class _TadaPageState extends State<TadaPage> {
               SizedBox(height: 30),
               Text(
                 widget.title,
+                textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              SizedBox(height: 20),
-              Text(
-                widget.info,
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16),
+              SizedBox(height: 15),
+              Padding(
+                padding: EdgeInsets.all(20.0),
+                child: Text(
+                  widget.info,
+                  textAlign: TextAlign.justify,
+                  style: TextStyle(fontSize: 16),
+                ),
               ),
               Spacer(),
             ],

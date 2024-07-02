@@ -6,7 +6,6 @@ import 'dart:io';
 import 'package:flutter/widgets.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/services.dart' show rootBundle;
-import 'tada_page.dart'; // TadaPage를 import합니다.
 
 class TodaysBookPage extends StatefulWidget {
   const TodaysBookPage({super.key});
@@ -24,7 +23,7 @@ class _TodaysBookPageState extends State<TodaysBookPage> {
 
   Widget displayImage(String imagePath) {
     if (_currentBookIndex == -1) {
-      return Center(
+      return const Center(
         child: Text(
           '?',
           style: TextStyle(fontSize: 200, color: Colors.white),
@@ -101,20 +100,124 @@ class _TodaysBookPageState extends State<TodaysBookPage> {
   void _stopSlideshow() {
     _timer?.cancel();
     _timer = null;
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-          builder: (context) => TadaPage(
-                bookImage: _currentBookIndex != -1
-                    ? _bookImages[_currentBookIndex]
-                    : '',
-                title: _currentBookIndex != -1
-                    ? _bookTitle[_currentBookIndex]
-                    : '',
-                info:
-                    _currentBookIndex != -1 ? _bookInfo[_currentBookIndex] : '',
-              )),
-    );
+    if (_currentBookIndex != -1) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return Dialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20.0),
+            ),
+            child: Stack(
+              children: [
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Column(
+                        children: [
+                          Container(
+                            child: Padding(
+                              padding: EdgeInsets.only(bottom: 10),
+                              child: Image.asset(
+                                'assets/icon.png',
+                                width: 50,
+                                height: 50,
+                              ),
+                            ),
+                          ),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.black,
+                              borderRadius: BorderRadius.circular(16.0),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Colors.black26,
+                                  blurRadius: 10.0,
+                                  offset: Offset(0, 10),
+                                ),
+                              ],
+                            ),
+                            child: Image.asset(
+                              _currentBookIndex != -1
+                                  ? _bookImages[_currentBookIndex]
+                                  : 'assets/no_image.png',
+                              width: 150,
+                              height: 200,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          CustomPaint(
+                            size: Size(300, 10),
+                            painter: TrapezoidPainter(),
+                          ),
+                          Container(
+                            width: 300,
+                            height: 15,
+                            color: Color.fromARGB(255, 205, 193, 175),
+                          ),
+                          const SizedBox(height: 30),
+                          Text(
+                            _currentBookIndex != -1
+                                ? _bookTitle[_currentBookIndex]
+                                : '',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 15),
+                          Text(
+                            _currentBookIndex != -1
+                                ? _bookInfo[_currentBookIndex]
+                                : '',
+                            textAlign: TextAlign.justify,
+                            style: TextStyle(fontSize: 16),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                Positioned(
+                  right: 0.0,
+                  child: IconButton(
+                    icon: Icon(Icons.close),
+                    onPressed: () {
+                      setState(() {
+                        _currentBookIndex = -1;
+                      });
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    } else {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          actionsPadding: EdgeInsets.only(top: 5, bottom: 1),
+          title: const Text('Press the start button first'),
+          actions: [
+            Center(
+              child: TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text('OK'),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   @override
@@ -132,8 +235,8 @@ class _TodaysBookPageState extends State<TodaysBookPage> {
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: [
-                  Spacer(),
-                  Text(
+                  const Spacer(),
+                  const Text(
                     "Today's Book",
                     style: TextStyle(
                       fontSize: 34,
@@ -156,7 +259,7 @@ class _TodaysBookPageState extends State<TodaysBookPage> {
                     decoration: BoxDecoration(
                       color: Colors.black,
                       borderRadius: BorderRadius.circular(16.0),
-                      boxShadow: [
+                      boxShadow: const [
                         BoxShadow(
                           color: Colors.black26,
                           blurRadius: 10.0,
@@ -215,5 +318,28 @@ class _TodaysBookPageState extends State<TodaysBookPage> {
               ),
             ),
     );
+  }
+}
+
+class TrapezoidPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Paint paint = Paint()
+      ..color = const Color.fromARGB(255, 183, 172, 155)
+      ..style = PaintingStyle.fill;
+
+    final Path path = Path()
+      ..moveTo(0, size.height)
+      ..lineTo(size.width * 0.1, 0)
+      ..lineTo(size.width * 0.9, 0)
+      ..lineTo(size.width, size.height)
+      ..close();
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return false;
   }
 }
