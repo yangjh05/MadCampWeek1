@@ -30,20 +30,6 @@ class SecondContacts extends StatelessWidget {
             expandedHeight: 200.0,
             backgroundColor: Color.fromARGB(255, 176, 183, 187),
             stretch: true,
-            onStretchTrigger: () async {
-              AnimatedContainer(
-                duration: Duration(milliseconds: 500),
-                curve: Curves.easeInOut,
-                width: 300,
-                height: 500,
-                decoration: BoxDecoration(
-                  image: DecorationImage(
-                    image: AssetImage(image), // 배경 이미지 파일 경로
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              );
-            },
             flexibleSpace: FlexibleSpaceBar(
               title: Align(
                 alignment: Alignment.bottomRight,
@@ -77,10 +63,34 @@ class SecondContacts extends StatelessWidget {
                     child: Column(
                       children: [
                         SizedBox(height: 16),
-                        CircleAvatar(
-                          radius: 50,
-                          backgroundColor: Colors.grey,
-                          backgroundImage: AssetImage(image),
+                        GestureDetector(
+                          onTap: () {
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return Dialog(
+                                  backgroundColor: Colors.transparent,
+                                  insetPadding: EdgeInsets.all(10),
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                    child: Center(
+                                      child: Image.asset(
+                                        image,
+                                        fit: BoxFit.contain,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                          child: CircleAvatar(
+                            radius: 50,
+                            backgroundColor: Colors.grey,
+                            backgroundImage: AssetImage(image),
+                          ),
                         ),
                         SizedBox(height: 16),
                         Text(

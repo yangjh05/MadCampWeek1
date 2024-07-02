@@ -409,9 +409,9 @@ class _GalleryState extends State<GalleryPage> {
                         _debounce =
                             Timer(const Duration(milliseconds: 100), () {
                           setState(() {
-                            if (details.scale > 1.5)
+                            if (details.scale > 1)
                               numColumn++;
-                            else if (details.scale < 0.8) numColumn--;
+                            else if (details.scale < 1) numColumn--;
                             if (numColumn > maxColumn) numColumn = maxColumn;
                             if (numColumn < minColumn) numColumn = minColumn;
                           });
@@ -446,38 +446,38 @@ class _GalleryState extends State<GalleryPage> {
                                       ),
                                     ));
                               },
-                              child: Stack(
-                                children: [
-                                  Hero(
-                                    tag: filteredBook[index].image,
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 2.0),
-                                      child: displayImage(
-                                          filteredBook[index].image),
-                                    ),
-                                  ),
-                                  if (_isDeleteMode)
-                                    Positioned(
-                                      top: 0,
-                                      right: 0,
-                                      child: Checkbox(
-                                        value: _selectedBooks
-                                            .contains(filteredBook[index]),
-                                        onChanged: (bool? value) {
-                                          setState(() {
-                                            if (value == true) {
-                                              _selectedBooks
-                                                  .add(filteredBook[index]);
-                                            } else {
-                                              _selectedBooks
-                                                  .remove(filteredBook[index]);
-                                            }
-                                          });
-                                        },
+                              child: Center(
+                                child: Stack(
+                                  children: [
+                                    Hero(
+                                      tag: filteredBook[index].image,
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 2.0),
+                                        child: displayImage(
+                                            filteredBook[index].image),
                                       ),
                                     ),
-                                ],
+                                    if (_isDeleteMode)
+                                      Positioned(
+                                        child: Checkbox(
+                                          value: _selectedBooks
+                                              .contains(filteredBook[index]),
+                                          onChanged: (bool? value) {
+                                            setState(() {
+                                              if (value == true) {
+                                                _selectedBooks
+                                                    .add(filteredBook[index]);
+                                              } else {
+                                                _selectedBooks.remove(
+                                                    filteredBook[index]);
+                                              }
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                  ],
+                                ),
                               ),
                             );
                           },
