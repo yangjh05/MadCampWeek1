@@ -6,6 +6,7 @@ import 'dart:io';
 import 'package:flutter/widgets.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import 'tada_page.dart'; // TadaPage를 import합니다.
 
 class TodaysBookPage extends StatefulWidget {
   const TodaysBookPage({super.key});
@@ -15,11 +16,22 @@ class TodaysBookPage extends StatefulWidget {
 }
 
 class _TodaysBookPageState extends State<TodaysBookPage> {
-  int _currentBookIndex = 0;
+  int _currentBookIndex = -1;
   Timer? _timer;
   List<String> _bookImages = [];
+  List<String> _bookTitle = [];
+  List<String> _bookInfo = [];
 
   Widget displayImage(String imagePath) {
+    if (_currentBookIndex == -1) {
+      return Center(
+        child: Text(
+          '?',
+          style: TextStyle(fontSize: 200, color: Colors.white),
+        ),
+      );
+    }
+
     if (!imagePath.startsWith('assets/')) {
       return Image.file(
         File(imagePath),
@@ -60,6 +72,8 @@ class _TodaysBookPageState extends State<TodaysBookPage> {
       final List<dynamic> data = json.decode(response);
       setState(() {
         _bookImages = data.map((item) => item['image'] as String).toList();
+        _bookTitle = data.map((item) => item['book'] as String).toList();
+        _bookInfo = data.map((item) => item['info'] as String).toList();
       });
     } catch (e) {
       print("Error loading data: $e");
@@ -74,6 +88,9 @@ class _TodaysBookPageState extends State<TodaysBookPage> {
 
   void _startSlideshow() {
     if (_timer != null) return;
+    setState(() {
+      _currentBookIndex = 0;
+    });
     _timer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
       setState(() {
         _currentBookIndex = (_currentBookIndex + 1) % _bookImages.length;
@@ -84,6 +101,20 @@ class _TodaysBookPageState extends State<TodaysBookPage> {
   void _stopSlideshow() {
     _timer?.cancel();
     _timer = null;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (context) => TadaPage(
+                bookImage: _currentBookIndex != -1
+                    ? _bookImages[_currentBookIndex]
+                    : '',
+                title: _currentBookIndex != -1
+                    ? _bookTitle[_currentBookIndex]
+                    : '',
+                info:
+                    _currentBookIndex != -1 ? _bookInfo[_currentBookIndex] : '',
+              )),
+    );
   }
 
   @override
@@ -123,6 +154,7 @@ class _TodaysBookPageState extends State<TodaysBookPage> {
                     width: MediaQuery.of(context).size.width * 0.7,
                     height: 400,
                     decoration: BoxDecoration(
+                      color: Colors.black,
                       borderRadius: BorderRadius.circular(16.0),
                       boxShadow: [
                         BoxShadow(
@@ -133,7 +165,9 @@ class _TodaysBookPageState extends State<TodaysBookPage> {
                       ],
                     ),
                     clipBehavior: Clip.antiAlias,
-                    child: displayImage(_bookImages[_currentBookIndex]),
+                    child: displayImage(_currentBookIndex == -1
+                        ? ''
+                        : _bookImages[_currentBookIndex]),
                   ),
                   SizedBox(height: 25),
                   Row(
@@ -182,10 +216,4 @@ class _TodaysBookPageState extends State<TodaysBookPage> {
             ),
     );
   }
-}
-
-void main() {
-  runApp(MaterialApp(
-    home: TodaysBookPage(),
-  ));
 }

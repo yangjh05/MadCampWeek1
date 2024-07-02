@@ -10,7 +10,8 @@ class SecondContacts extends StatelessWidget {
   final String nation;
   final String education;
 
-  SecondContacts({
+  const SecondContacts({
+    super.key,
     required this.number,
     required this.name,
     required this.book,
