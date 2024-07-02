@@ -94,11 +94,11 @@ class FullScreenImagePage extends State<ZoomableImage> {
   Widget displayImage(String imagePath) {
     if (!imagePath.startsWith('assets/')) {
       return Image.file(File(imagePath),
-          fit: BoxFit.contain, // 변경된 부분
+          fit: BoxFit.cover, // 변경된 부분
           width: MediaQuery.of(context).size.width * 0.9);
     } else if (imagePath.startsWith('assets/')) {
       return Image.asset(imagePath,
-          fit: BoxFit.contain, // 변경된 부분
+          fit: BoxFit.cover, // 변경된 부분
           width: MediaQuery.of(context).size.width * 0.9);
     } else {
       return Center(
@@ -202,7 +202,8 @@ class Book {
   }
 }
 
-class _GalleryState extends State<GalleryPage> {
+class _GalleryState extends State<GalleryPage>
+    with SingleTickerProviderStateMixin {
   int numColumn = 3;
   final maxColumn = 4, minColumn = 2;
   Timer? _debounce;
@@ -214,6 +215,9 @@ class _GalleryState extends State<GalleryPage> {
   Set<Book> _selectedBooks = Set<Book>();
   bool _isDeleteMode = false;
 
+  late AnimationController _controller;
+  bool _isExpanded = false;
+
   TextEditingController _searchController = TextEditingController();
 
   @override
@@ -221,12 +225,32 @@ class _GalleryState extends State<GalleryPage> {
     super.initState();
     loadData();
     _searchController.addListener(filterItems);
+    _controller = AnimationController(
+      duration: Duration(milliseconds: 300),
+      vsync: this,
+    );
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _controller.dispose();
     super.dispose();
+  }
+
+  void _toggleButtons() {
+    if (!_isExpanded) {
+      setState(() {
+        _isExpanded = !_isExpanded;
+        _controller.forward();
+      });
+    } else {
+      _controller.reverse().then((_) {
+        setState(() {
+          _isExpanded = !_isExpanded;
+        });
+      });
+    }
   }
 
   void filterItems() {
@@ -345,259 +369,472 @@ class _GalleryState extends State<GalleryPage> {
     }
   }
 
+  Widget _buildButton(
+      {required IconData icon,
+      required double angle,
+      required double distance,
+      required String tag}) {
+    const b = 0.85;
+    const a = -(b * b) / (1 - 2 * b);
+    const P = 1 / (1 - 2 * b);
+    if (tag == "add") {
+      return AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          final offset = Offset.fromDirection(
+              angle + 1 / 3 * 3.14 * (1 - _controller.value),
+              (P * (_controller.value - b) * (_controller.value - b) + a) *
+                  distance);
+          return Transform.translate(
+            offset: offset,
+            child: FloatingActionButton(
+              heroTag: tag,
+              mini: true,
+              onPressed: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => BookAdd()),
+                );
+
+                // pop 후에 수행할 작업
+                print("Reloading!!!");
+                // 애플리케이션 문서 디렉토리 경로 가져오기
+                Directory documentsDirectory =
+                    await getApplicationDocumentsDirectory();
+                String dbPath = p.join(documentsDirectory.path, 'book.db');
+
+                // assets 폴더에서 데이터베이스 파일을 복사
+                ByteData data =
+                    await rootBundle.load('assets/database/book.db');
+                List<int> bytes = data.buffer
+                    .asUint8List(data.offsetInBytes, data.lengthInBytes);
+                File dbFile = File(dbPath);
+                if (!(await dbFile.exists())) {
+                  await dbFile.writeAsBytes(bytes, flush: true);
+                  print('Database copied to ${dbFile.path}');
+                }
+
+                // 데이터베이스 연결
+                Database db = await openDatabase(dbPath, version: 1);
+
+                // 데이터베이스에서 데이터 읽기
+                List<Map<String, dynamic>> bookList = await db.query('Book');
+
+                // JSON 데이터로 변환
+                String jsonString = jsonEncode(bookList);
+
+                // JSON 파일 경로 설정
+                String jsonFilePath =
+                    p.join(documentsDirectory.path, 'books.json');
+
+                // JSON 파일에 저장
+                File jsonFile = File(jsonFilePath);
+                await jsonFile.writeAsString(jsonString);
+
+                print('Data saved to JSON file: $jsonFilePath');
+
+                try {
+                  Directory documentsDirectory =
+                      await getApplicationDocumentsDirectory();
+                  String jsonFilePath = '${documentsDirectory.path}/books.json';
+
+                  File jsonFile = File(jsonFilePath);
+                  String response;
+
+                  if (await jsonFile.exists()) {
+                    // 문서 디렉토리에서 JSON 파일 읽기
+                    response = await jsonFile.readAsString();
+                    print("Read from DB");
+                  } else {
+                    // assets 폴더에서 JSON 파일 읽기
+                    print("Read from assets");
+                    response = await rootBundle.loadString('assets/books.json');
+                    // JSON 파일을 문서 디렉토리에 저장
+                    await jsonFile.writeAsString(response);
+                  }
+
+                  final data = json.decode(response);
+                  setState(() {
+                    imageUrls = List<Book>.from(
+                        data.map((item) => Book.fromJson(item)));
+                    imageUrls.sort((a, b) => a.book.compareTo(b.book));
+                    filteredBook = imageUrls;
+                    filterItems();
+                  });
+                } catch (e) {
+                  print("Error loading data: $e");
+                }
+              },
+              child: Icon(icon),
+            ),
+          );
+        },
+      );
+    } else if (tag == "remove")
+      // ignore: curly_braces_in_flow_control_structures
+      return AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          final offset = Offset.fromDirection(
+              angle + 1 / 2 * 3.14 * (1 - _controller.value),
+              (P * (_controller.value - b) * (_controller.value - b) + a) *
+                  distance);
+          return Transform.translate(
+            offset: offset,
+            child: FloatingActionButton(
+              heroTag: tag,
+              mini: true,
+              onPressed: _toggleDeleteMode,
+              child: Icon(icon),
+            ),
+          );
+        },
+      );
+    else
+      // ignore: curly_braces_in_flow_control_structures
+      return AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          final offset = Offset.fromDirection(
+              angle + 1 / 8 * 3.14 * (1 - _controller.value),
+              _controller.value * distance);
+          return Transform.translate(
+            offset: offset,
+            child: FloatingActionButton(
+              heroTag: tag,
+              mini: true,
+              onPressed: () {
+                print("Pressed");
+              },
+              child: Icon(icon),
+            ),
+          );
+        },
+      );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("Gallery"),
-        actions: [
-          if (_isDeleteMode)
-            IconButton(
-                onPressed: _deleteSelectedBooks, icon: Icon(Icons.delete))
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Row(
+    return ColorFiltered(
+        colorFilter: ColorFilter.mode(
+          Colors.transparent,
+          BlendMode.multiply,
+        ),
+        child: Scaffold(
+          // appBar: AppBar(
+          //   title: Text("Gallery"),
+          //   actions: [
+          //     if (_isDeleteMode)
+          //       IconButton(
+          //           onPressed: _deleteSelectedBooks, icon: Icon(Icons.delete))
+          //   ],
+          // ),
+          body: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      labelText: 'Search',
-                      prefixIcon: Icon(Icons.search),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12.0),
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(width: 10),
-                DropdownButton<String>(
-                  value: selectedCategory,
-                  items: categories.map((String category) {
-                    return DropdownMenuItem<String>(
-                      value: category,
-                      child: Text(category),
-                    );
-                  }).toList(),
-                  onChanged: (String? newValue) {
-                    setState(() {
-                      selectedCategory = newValue!;
-                      filterItems();
-                    });
-                  },
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 16.0,
-                  ),
-                  dropdownColor: Colors.white,
-                  icon: Icon(Icons.arrow_drop_down),
-                ),
-                SizedBox(width: 10),
-              ],
-            ),
-            SizedBox(height: 20),
-            Expanded(
-              child: imageUrls.isEmpty
-                  ? Center(child: CircularProgressIndicator())
-                  : GestureDetector(
-                      onScaleUpdate: (ScaleUpdateDetails details) {
-                        if (_debounce?.isActive ?? false) _debounce!.cancel();
-                        _debounce =
-                            Timer(const Duration(milliseconds: 100), () {
-                          setState(() {
-                            if (details.scale > 1)
-                              numColumn++;
-                            else if (details.scale < 1) numColumn--;
-                            if (numColumn > maxColumn) numColumn = maxColumn;
-                            if (numColumn < minColumn) numColumn = minColumn;
-                          });
-                        });
-                      },
-                      child: AnimatedSwitcher(
-                        duration: Duration(milliseconds: 200),
-                        transitionBuilder:
-                            (Widget child, Animation<double> animation) {
-                          return FadeTransition(
-                              opacity: animation, child: child);
-                        },
-                        child: GridView.builder(
-                          key: ValueKey<int>(numColumn),
-                          gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: numColumn,
-                            childAspectRatio: 1.0,
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _searchController,
+                        decoration: InputDecoration(
+                          labelText: 'Search',
+                          prefixIcon: Icon(Icons.search),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12.0),
                           ),
-                          itemCount: filteredBook.length,
-                          itemBuilder: (context, index) {
-                            return GestureDetector(
-                              onTap: () {
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => ZoomableImage(
-                                        imagePath: filteredBook[index].image,
-                                        book: filteredBook[index].book,
-                                        info: filteredBook[index].info,
-                                        author: filteredBook[index].author,
-                                      ),
-                                    ));
-                              },
-                              child: Center(
-                                child: Stack(
-                                  children: [
-                                    Hero(
-                                      tag: filteredBook[index].image,
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            vertical: 2.0),
-                                        child: displayImage(
-                                            filteredBook[index].image),
-                                      ),
-                                    ),
-                                    if (_isDeleteMode)
-                                      Positioned(
-                                        child: Checkbox(
-                                          value: _selectedBooks
-                                              .contains(filteredBook[index]),
-                                          onChanged: (bool? value) {
-                                            setState(() {
-                                              if (value == true) {
-                                                _selectedBooks
-                                                    .add(filteredBook[index]);
-                                              } else {
-                                                _selectedBooks.remove(
-                                                    filteredBook[index]);
-                                              }
-                                            });
-                                          },
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
                         ),
                       ),
                     ),
-            ),
-            SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton(
-                  onPressed: () async {
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => BookAdd()),
-                    );
-
-                    // pop 후에 수행할 작업
-                    print("Reloading!!!");
-                    // 애플리케이션 문서 디렉토리 경로 가져오기
-                    Directory documentsDirectory =
-                        await getApplicationDocumentsDirectory();
-                    String dbPath = p.join(documentsDirectory.path, 'book.db');
-
-                    // assets 폴더에서 데이터베이스 파일을 복사
-                    ByteData data =
-                        await rootBundle.load('assets/database/book.db');
-                    List<int> bytes = data.buffer
-                        .asUint8List(data.offsetInBytes, data.lengthInBytes);
-                    File dbFile = File(dbPath);
-                    if (!(await dbFile.exists())) {
-                      await dbFile.writeAsBytes(bytes, flush: true);
-                      print('Database copied to ${dbFile.path}');
-                    }
-
-                    // 데이터베이스 연결
-                    Database db = await openDatabase(dbPath, version: 1);
-
-                    // 데이터베이스에서 데이터 읽기
-                    List<Map<String, dynamic>> bookList =
-                        await db.query('Book');
-
-                    // JSON 데이터로 변환
-                    String jsonString = jsonEncode(bookList);
-
-                    // JSON 파일 경로 설정
-                    String jsonFilePath =
-                        p.join(documentsDirectory.path, 'books.json');
-
-                    // JSON 파일에 저장
-                    File jsonFile = File(jsonFilePath);
-                    await jsonFile.writeAsString(jsonString);
-
-                    print('Data saved to JSON file: $jsonFilePath');
-
-                    try {
-                      Directory documentsDirectory =
-                          await getApplicationDocumentsDirectory();
-                      String jsonFilePath =
-                          '${documentsDirectory.path}/books.json';
-
-                      File jsonFile = File(jsonFilePath);
-                      String response;
-
-                      if (await jsonFile.exists()) {
-                        // 문서 디렉토리에서 JSON 파일 읽기
-                        response = await jsonFile.readAsString();
-                        print("Read from DB");
-                      } else {
-                        // assets 폴더에서 JSON 파일 읽기
-                        print("Read from assets");
-                        response =
-                            await rootBundle.loadString('assets/books.json');
-                        // JSON 파일을 문서 디렉토리에 저장
-                        await jsonFile.writeAsString(response);
-                      }
-
-                      final data = json.decode(response);
-                      setState(() {
-                        imageUrls = List<Book>.from(
-                            data.map((item) => Book.fromJson(item)));
-                        imageUrls.sort((a, b) => a.book.compareTo(b.book));
-                        filteredBook = imageUrls;
-                        filterItems();
-                      });
-                    } catch (e) {
-                      print("Error loading data: $e");
-                    }
-                  },
-                  child: Text('Add Book..'),
-                  style: ElevatedButton.styleFrom(
-                    foregroundColor: Color.fromARGB(255, 0, 0, 0),
-                    minimumSize: Size(100, 40), // 버튼 크기 지정
-                    padding: EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 8), // 버튼 내부 패딩
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.0),
+                    SizedBox(width: 10),
+                    DropdownButton<String>(
+                      value: selectedCategory,
+                      items: categories.map((String category) {
+                        return DropdownMenuItem<String>(
+                          value: category,
+                          child: Text(category),
+                        );
+                      }).toList(),
+                      onChanged: (String? newValue) {
+                        setState(() {
+                          selectedCategory = newValue!;
+                          filterItems();
+                        });
+                      },
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 16.0,
+                      ),
+                      dropdownColor: Colors.white,
+                      icon: Icon(Icons.arrow_drop_down),
                     ),
-                  ),
+                    SizedBox(width: 10),
+                    if (_isDeleteMode)
+                      IconButton(
+                          onPressed: _deleteSelectedBooks,
+                          icon: Icon(Icons.delete))
+                  ],
                 ),
-                SizedBox(width: 20), // 버튼 사이의 간격
-                ElevatedButton(
-                  onPressed: _toggleDeleteMode,
-                  child: Text(_isDeleteMode ? 'Cancel' : 'Delete Book'),
-                  style: ElevatedButton.styleFrom(
-                    foregroundColor: Color.fromARGB(255, 0, 0, 0),
-                    minimumSize: Size(100, 40), // 버튼 크기 지정
-                    padding: EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 8), // 버튼 내부 패딩
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.0),
+                SizedBox(height: 20),
+                Expanded(
+                  child: Stack(children: [
+                    imageUrls.isEmpty
+                        ? Center(child: CircularProgressIndicator())
+                        : GestureDetector(
+                            onScaleUpdate: (ScaleUpdateDetails details) {
+                              if (_debounce?.isActive ?? false)
+                                _debounce!.cancel();
+                              _debounce =
+                                  Timer(const Duration(milliseconds: 100), () {
+                                setState(() {
+                                  if (details.scale > 1)
+                                    numColumn++;
+                                  else if (details.scale < 1) numColumn--;
+                                  if (numColumn > maxColumn)
+                                    numColumn = maxColumn;
+                                  if (numColumn < minColumn)
+                                    numColumn = minColumn;
+                                });
+                              });
+                            },
+                            child: AnimatedSwitcher(
+                              duration: Duration(milliseconds: 200),
+                              transitionBuilder:
+                                  (Widget child, Animation<double> animation) {
+                                return FadeTransition(
+                                    opacity: animation, child: child);
+                              },
+                              child: GridView.builder(
+                                key: ValueKey<int>(numColumn),
+                                gridDelegate:
+                                    SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: numColumn,
+                                  childAspectRatio: 1.0,
+                                ),
+                                itemCount: filteredBook.length,
+                                itemBuilder: (context, index) {
+                                  return GestureDetector(
+                                    onTap: () {
+                                      Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => ZoomableImage(
+                                              imagePath:
+                                                  filteredBook[index].image,
+                                              book: filteredBook[index].book,
+                                              info: filteredBook[index].info,
+                                              author:
+                                                  filteredBook[index].author,
+                                            ),
+                                          ));
+                                    },
+                                    child: Center(
+                                      child: Stack(
+                                        children: [
+                                          Hero(
+                                            tag: filteredBook[index].image,
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      vertical: 2.0),
+                                              child: ClipRRect(
+                                                borderRadius:
+                                                    BorderRadius.circular(
+                                                        8.0), // 모서리 둥글기 설정
+                                                child: AspectRatio(
+                                                  aspectRatio: 1, // 필요한 비율로 설정
+                                                  child: displayImage(
+                                                      filteredBook[index]
+                                                          .image),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          if (_isDeleteMode)
+                                            Positioned(
+                                              child: Checkbox(
+                                                value: _selectedBooks.contains(
+                                                    filteredBook[index]),
+                                                onChanged: (bool? value) {
+                                                  setState(() {
+                                                    if (value == true) {
+                                                      _selectedBooks.add(
+                                                          filteredBook[index]);
+                                                    } else {
+                                                      _selectedBooks.remove(
+                                                          filteredBook[index]);
+                                                    }
+                                                  });
+                                                },
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                    Positioned(
+                      bottom: 16,
+                      right: 16,
+                      child: Container(
+                          //color: Colors.amber,
+                          width: 200,
+                          height: 200,
+                          child: ColorFiltered(
+                              colorFilter: _isExpanded && !_isDeleteMode
+                                  ? ColorFilter.mode(
+                                      Colors.black.withOpacity(0.5),
+                                      BlendMode.overlay,
+                                    )
+                                  : ColorFilter.mode(
+                                      Colors.transparent,
+                                      BlendMode.multiply,
+                                    ),
+                              child: Stack(
+                                clipBehavior: Clip.none,
+                                alignment: Alignment.bottomRight,
+                                children: [
+                                  if (_isExpanded) ...[
+                                    _buildButton(
+                                        icon: Icons.add,
+                                        angle: -5 / 8 * 3.14,
+                                        distance: 100,
+                                        tag: 'add'),
+                                    _buildButton(
+                                        icon: Icons.remove,
+                                        angle: -7 / 8 * 3.14,
+                                        distance: 100,
+                                        tag: 'remove'),
+                                  ],
+                                  FloatingActionButton(
+                                    //focusColor: Colors.amber,
+                                    onPressed: _toggleButtons,
+                                    child: Icon(_isExpanded
+                                        ? Icons.close
+                                        : Icons.more_vert),
+                                  ),
+                                ],
+                              ))),
                     ),
-                  ),
+                  ]),
                 ),
+                SizedBox(height: 10),
+                // Row(
+                //   mainAxisAlignment: MainAxisAlignment.center,
+                //   children: [
+                //     ElevatedButton(
+                //       onPressed: () async {
+                //         await Navigator.push(
+                //           context,
+                //           MaterialPageRoute(builder: (context) => BookAdd()),
+                //         );
+
+                //         // pop 후에 수행할 작업
+                //         print("Reloading!!!");
+                //         // 애플리케이션 문서 디렉토리 경로 가져오기
+                //         Directory documentsDirectory =
+                //             await getApplicationDocumentsDirectory();
+                //         String dbPath = p.join(documentsDirectory.path, 'book.db');
+
+                //         // assets 폴더에서 데이터베이스 파일을 복사
+                //         ByteData data =
+                //             await rootBundle.load('assets/database/book.db');
+                //         List<int> bytes = data.buffer
+                //             .asUint8List(data.offsetInBytes, data.lengthInBytes);
+                //         File dbFile = File(dbPath);
+                //         if (!(await dbFile.exists())) {
+                //           await dbFile.writeAsBytes(bytes, flush: true);
+                //           print('Database copied to ${dbFile.path}');
+                //         }
+
+                //         // 데이터베이스 연결
+                //         Database db = await openDatabase(dbPath, version: 1);
+
+                //         // 데이터베이스에서 데이터 읽기
+                //         List<Map<String, dynamic>> bookList =
+                //             await db.query('Book');
+
+                //         // JSON 데이터로 변환
+                //         String jsonString = jsonEncode(bookList);
+
+                //         // JSON 파일 경로 설정
+                //         String jsonFilePath =
+                //             p.join(documentsDirectory.path, 'books.json');
+
+                //         // JSON 파일에 저장
+                //         File jsonFile = File(jsonFilePath);
+                //         await jsonFile.writeAsString(jsonString);
+
+                //         print('Data saved to JSON file: $jsonFilePath');
+
+                //         try {
+                //           Directory documentsDirectory =
+                //               await getApplicationDocumentsDirectory();
+                //           String jsonFilePath =
+                //               '${documentsDirectory.path}/books.json';
+
+                //           File jsonFile = File(jsonFilePath);
+                //           String response;
+
+                //           if (await jsonFile.exists()) {
+                //             // 문서 디렉토리에서 JSON 파일 읽기
+                //             response = await jsonFile.readAsString();
+                //             print("Read from DB");
+                //           } else {
+                //             // assets 폴더에서 JSON 파일 읽기
+                //             print("Read from assets");
+                //             response =
+                //                 await rootBundle.loadString('assets/books.json');
+                //             // JSON 파일을 문서 디렉토리에 저장
+                //             await jsonFile.writeAsString(response);
+                //           }
+
+                //           final data = json.decode(response);
+                //           setState(() {
+                //             imageUrls = List<Book>.from(
+                //                 data.map((item) => Book.fromJson(item)));
+                //             imageUrls.sort((a, b) => a.book.compareTo(b.book));
+                //             filteredBook = imageUrls;
+                //             filterItems();
+                //           });
+                //         } catch (e) {
+                //           print("Error loading data: $e");
+                //         }
+                //       },
+                //       child: Text('Add Book..'),
+                //       style: ElevatedButton.styleFrom(
+                //         foregroundColor: Color.fromARGB(255, 0, 0, 0),
+                //         minimumSize: Size(100, 40), // 버튼 크기 지정
+                //         padding: EdgeInsets.symmetric(
+                //             horizontal: 16, vertical: 8), // 버튼 내부 패딩
+                //         shape: RoundedRectangleBorder(
+                //           borderRadius: BorderRadius.circular(12.0),
+                //         ),
+                //       ),
+                //     ),
+                //     SizedBox(width: 20), // 버튼 사이의 간격
+                //     ElevatedButton(
+                //       onPressed: _toggleDeleteMode,
+                //       child: Text(_isDeleteMode ? 'Cancel' : 'Delete Book'),
+                //       style: ElevatedButton.styleFrom(
+                //         foregroundColor: Color.fromARGB(255, 0, 0, 0),
+                //         minimumSize: Size(100, 40), // 버튼 크기 지정
+                //         padding: EdgeInsets.symmetric(
+                //             horizontal: 16, vertical: 8), // 버튼 내부 패딩
+                //         shape: RoundedRectangleBorder(
+                //           borderRadius: BorderRadius.circular(12.0),
+                //         ),
+                //       ),
+                //     ),
+                //   ],
+                // ),
               ],
             ),
-          ],
-        ),
-      ),
-    );
+          ),
+        ));
   }
 }

@@ -63,7 +63,7 @@ class _ContactsPageState extends State<ContactsPage> {
     return MaterialApp(
         title: 'ListView',
         home: Scaffold(
-            appBar: AppBar(title: const Text('Contacts')),
+            //appBar: AppBar(title: const Text('Contacts')),
             body: contacts.isEmpty
                 ? Center(child: CircularProgressIndicator())
                 : Padding(

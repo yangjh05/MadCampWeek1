@@ -70,6 +70,7 @@ flutter:
   assets:
       - assets/contacts.json
       - assets/books.json
+      - assets/secrets.json
       - assets/image/
       - assets/author_image/
       - assets/database/book.db

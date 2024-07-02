@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
-import 'package:flutter/widgets.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
@@ -21,8 +20,9 @@ class _TodaysBookPageState extends State<TodaysBookPage>
   List<String> _bookImages = [];
   List<String> _bookTitle = [];
   List<String> _bookInfo = [];
-  late AnimationController _fadeController;
-  late Animation<double> _fadeAnimation;
+  bool _isPopupShown = false;
+  bool showSecond = true;
+  int counter = 0;
 
   Widget displayImage(String imagePath) {
     if (_currentBookIndex == -1) {
@@ -86,19 +86,6 @@ class _TodaysBookPageState extends State<TodaysBookPage>
   void initState() {
     super.initState();
     loadData();
-
-    _fadeController = AnimationController(
-      duration: const Duration(seconds: 1),
-      vsync: this,
-    );
-
-    _fadeAnimation =
-        Tween<double>(begin: 1.0, end: 0.0).animate(_fadeController)
-          ..addStatusListener((status) {
-            if (status == AnimationStatus.completed) {
-              _fadeController.reverse();
-            }
-          });
   }
 
   void _startSlideshow() {
@@ -116,20 +103,13 @@ class _TodaysBookPageState extends State<TodaysBookPage>
   void _stopSlideshow() {
     _timer?.cancel();
     _timer = null;
-
-    if (_currentBookIndex != -1 && _fadeController != null) {
-      _fadeController.forward(from: 0.0);
-      _fadeController.addStatusListener((status) {
-        if (status == AnimationStatus.dismissed) {
-          _showPopup();
-        }
-      });
-    } else {
-      _showAlert();
-    }
+    counter = 0; // counter 초기화
+    showSecond = true;
+    _showPopup();
   }
 
   void _showPopup() {
+    _isPopupShown = true;
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -138,96 +118,122 @@ class _TodaysBookPageState extends State<TodaysBookPage>
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20.0),
           ),
-          child: Stack(
-            children: [
-              Column(
-                mainAxisSize: MainAxisSize.min,
+          child: StatefulBuilder(
+            builder: (BuildContext context, StateSetter setState) {
+              Timer.periodic(Duration(seconds: 1), (Timer timer) {
+                if (counter >= 1) {
+                  timer.cancel();
+                } else {
+                  setState(() {
+                    showSecond = !showSecond;
+                    counter++;
+                  });
+                }
+              });
+              return Stack(
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Column(
-                      children: [
-                        Container(
-                          child: Padding(
-                            padding: EdgeInsets.only(bottom: 10),
-                            child: Image.asset(
-                              'assets/icon.png',
-                              width: 50,
-                              height: 50,
-                            ),
-                          ),
-                        ),
-                        Stack(
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(20.0),
+                        child: Column(
                           children: [
-                            FadeTransition(
-                              opacity: _fadeAnimation,
-                              child: Image.network(
-                                'https://your-web-image-url.com/image.jpg',
+                            Container(
+                              child: Padding(
+                                padding: EdgeInsets.only(bottom: 10),
+                                child: Image.asset(
+                                  'assets/icon.png',
+                                  width: 50,
+                                  height: 50,
+                                ),
+                              ),
+                            ),
+                            AnimatedCrossFade(
+                              firstChild: _currentBookIndex != -1
+                                  ? Image.asset(
+                                      _bookImages[_currentBookIndex],
+                                      width: 150,
+                                      height: 200,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : const Center(
+                                      child: Text(
+                                        '?',
+                                        style: TextStyle(
+                                            fontSize: 200, color: Colors.white),
+                                      ),
+                                    ),
+                              secondChild: Image.network(
+                                'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSfMfoLneHJr_RZ8g7EU1CoriJSx5PXHZMFgg&s',
                                 width: 150,
                                 height: 200,
                                 fit: BoxFit.cover,
                               ),
+                              crossFadeState: showSecond
+                                  ? CrossFadeState.showSecond
+                                  : CrossFadeState.showFirst,
+                              duration: Duration(seconds: 1),
                             ),
-                            Image.asset(
+                            CustomPaint(
+                              size: Size(300, 10),
+                              painter: TrapezoidPainter(),
+                            ),
+                            Container(
+                              width: 300,
+                              height: 15,
+                              color: Color.fromARGB(255, 205, 193, 175),
+                            ),
+                            const SizedBox(height: 30),
+                            Text(
                               _currentBookIndex != -1
-                                  ? _bookImages[_currentBookIndex]
-                                  : 'assets/no_image.png',
-                              width: 150,
-                              height: 200,
-                              fit: BoxFit.cover,
+                                  ? _bookTitle[_currentBookIndex]
+                                  : '',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(height: 15),
+                            Text(
+                              _currentBookIndex != -1
+                                  ? _bookInfo[_currentBookIndex]
+                                  : '',
+                              textAlign: TextAlign.justify,
+                              style: TextStyle(fontSize: 16),
                             ),
                           ],
                         ),
-                        CustomPaint(
-                          size: Size(300, 10),
-                          painter: TrapezoidPainter(),
-                        ),
-                        Container(
-                          width: 300,
-                          height: 15,
-                          color: Color.fromARGB(255, 205, 193, 175),
-                        ),
-                        const SizedBox(height: 30),
-                        Text(
-                          _currentBookIndex != -1
-                              ? _bookTitle[_currentBookIndex]
-                              : '',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: 15),
-                        Text(
-                          _currentBookIndex != -1
-                              ? _bookInfo[_currentBookIndex]
-                              : '',
-                          textAlign: TextAlign.justify,
-                          style: TextStyle(fontSize: 16),
-                        ),
-                      ],
+                      ),
+                    ],
+                  ),
+                  Positioned(
+                    right: 0.0,
+                    child: IconButton(
+                      icon: Icon(Icons.close),
+                      onPressed: () {
+                        setState(() {
+                          print("closing");
+                          _currentBookIndex = -1;
+                          _isPopupShown = false;
+                        });
+                        Navigator.of(context).pop();
+                      },
                     ),
                   ),
                 ],
-              ),
-              Positioned(
-                right: 0.0,
-                child: IconButton(
-                  icon: Icon(Icons.close),
-                  onPressed: () {
-                    setState(() {
-                      _currentBookIndex = -1;
-                    });
-                    Navigator.of(context).pop();
-                  },
-                ),
-              ),
-            ],
+              );
+            },
           ),
         );
       },
-    );
+    ).then((_) {
+      // 팝업 닫힐 때 ? 표시
+      setState(() {
+        _currentBookIndex = -1;
+      });
+    });
   }
 
   void _showAlert() {
@@ -253,7 +259,6 @@ class _TodaysBookPageState extends State<TodaysBookPage>
   @override
   void dispose() {
     _timer?.cancel();
-    _fadeController.dispose();
     super.dispose();
   }
 
