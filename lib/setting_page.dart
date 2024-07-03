@@ -168,7 +168,7 @@ class _TodaysBookPageState extends State<TodaysBookPage>
                                 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSfMfoLneHJr_RZ8g7EU1CoriJSx5PXHZMFgg&s',
                                 width: 150,
                                 height: 200,
-                                fit: BoxFit.cover,
+                                fit: BoxFit.fill,
                               ),
                               crossFadeState: showSecond
                                   ? CrossFadeState.showSecond
