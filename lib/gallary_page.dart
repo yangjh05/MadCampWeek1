@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:flutter/widgets.dart';
+import 'package:flutterproj/revise_book_page.dart';
 import 'package:vector_math/vector_math_64.dart' show Vector3;
 import 'package:path_provider/path_provider.dart';
 import 'dart:async';
@@ -172,7 +173,7 @@ class GalleryPage extends StatefulWidget {
 }
 
 class Book {
-  final String book, image, info, author;
+  final String book, image, info, author, intro;
   final int ID;
 
   Book(
@@ -180,15 +181,19 @@ class Book {
       required this.book,
       required this.image,
       required this.info,
-      required this.author});
+      required this.author,
+      required this.intro});
 
   factory Book.fromJson(Map<String, dynamic> json) {
+    print(json);
     return Book(
-        ID: json['ID'],
-        author: json['author'],
-        book: json['book'],
-        image: json['image'],
-        info: json['info']);
+      ID: json['ID'],
+      author: json['author'],
+      book: json['book'],
+      image: json['image'],
+      info: json['info'],
+      intro: json['intro'],
+    );
   }
 
   Map<String, dynamic> toJson() {
@@ -198,6 +203,7 @@ class Book {
       'book': book,
       'image': image,
       'info': info,
+      'intro': intro,
     };
   }
 }
@@ -626,6 +632,107 @@ class _GalleryState extends State<GalleryPage>
                                                   filteredBook[index].author,
                                             ),
                                           ));
+                                    },
+                                    onLongPress: () async {
+                                      await Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) => BookAdjust(
+                                                  image:
+                                                      filteredBook[index].image,
+                                                  title:
+                                                      filteredBook[index].book,
+                                                  info:
+                                                      filteredBook[index].info,
+                                                  author: filteredBook[index]
+                                                      .author,
+                                                  id: filteredBook[index].ID,
+                                                  intro:
+                                                      filteredBook[index].intro,
+                                                )),
+                                      );
+
+                                      // pop 후에 수행할 작업
+                                      print("Reloading!!!");
+                                      // 애플리케이션 문서 디렉토리 경로 가져오기
+                                      Directory documentsDirectory =
+                                          await getApplicationDocumentsDirectory();
+                                      String dbPath = p.join(
+                                          documentsDirectory.path, 'book.db');
+
+                                      // assets 폴더에서 데이터베이스 파일을 복사
+                                      ByteData data = await rootBundle
+                                          .load('assets/database/book.db');
+                                      List<int> bytes = data.buffer.asUint8List(
+                                          data.offsetInBytes,
+                                          data.lengthInBytes);
+                                      File dbFile = File(dbPath);
+                                      if (!(await dbFile.exists())) {
+                                        await dbFile.writeAsBytes(bytes,
+                                            flush: true);
+                                        print(
+                                            'Database copied to ${dbFile.path}');
+                                      }
+
+                                      // 데이터베이스 연결
+                                      Database db = await openDatabase(dbPath,
+                                          version: 1);
+
+                                      // 데이터베이스에서 데이터 읽기
+                                      List<Map<String, dynamic>> bookList =
+                                          await db.query('Book');
+
+                                      // JSON 데이터로 변환
+                                      String jsonString = jsonEncode(bookList);
+
+                                      // JSON 파일 경로 설정
+                                      String jsonFilePath = p.join(
+                                          documentsDirectory.path,
+                                          'books.json');
+
+                                      // JSON 파일에 저장
+                                      File jsonFile = File(jsonFilePath);
+                                      await jsonFile.writeAsString(jsonString);
+
+                                      print(
+                                          'Data saved to JSON file: $jsonFilePath');
+
+                                      try {
+                                        Directory documentsDirectory =
+                                            await getApplicationDocumentsDirectory();
+                                        String jsonFilePath =
+                                            '${documentsDirectory.path}/books.json';
+
+                                        File jsonFile = File(jsonFilePath);
+                                        String response;
+
+                                        if (await jsonFile.exists()) {
+                                          // 문서 디렉토리에서 JSON 파일 읽기
+                                          response =
+                                              await jsonFile.readAsString();
+                                          print("Read from DB");
+                                        } else {
+                                          // assets 폴더에서 JSON 파일 읽기
+                                          print("Read from assets");
+                                          response = await rootBundle
+                                              .loadString('assets/books.json');
+                                          // JSON 파일을 문서 디렉토리에 저장
+                                          await jsonFile
+                                              .writeAsString(response);
+                                        }
+
+                                        final data = json.decode(response);
+                                        setState(() {
+                                          imageUrls = List<Book>.from(data.map(
+                                              (item) => Book.fromJson(item)));
+                                          imageUrls.sort((a, b) =>
+                                              a.book.compareTo(b.book));
+                                          filteredBook = imageUrls;
+                                          filterItems();
+                                        });
+                                      } catch (e) {
+                                        print("Error loading data: $e");
+                                      }
                                     },
                                     child: Center(
                                       child: Stack(

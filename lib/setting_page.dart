@@ -20,6 +20,7 @@ class _TodaysBookPageState extends State<TodaysBookPage>
   List<String> _bookImages = [];
   List<String> _bookTitle = [];
   List<String> _bookInfo = [];
+  List<String> _bookIntro = [];
   bool showSecond = true;
   int counter = 0;
 
@@ -75,6 +76,7 @@ class _TodaysBookPageState extends State<TodaysBookPage>
         _bookImages = data.map((item) => item['image'] as String).toList();
         _bookTitle = data.map((item) => item['book'] as String).toList();
         _bookInfo = data.map((item) => item['info'] as String).toList();
+        _bookIntro = data.map((item) => item['intro'] as String).toList();
       });
     } catch (e) {
       print("Error loading data: $e");
@@ -196,7 +198,7 @@ class _TodaysBookPageState extends State<TodaysBookPage>
                             SizedBox(height: 15),
                             Text(
                               _currentBookIndex != -1
-                                  ? _bookInfo[_currentBookIndex]
+                                  ? _bookIntro[_currentBookIndex]
                                   : '',
                               textAlign: TextAlign.justify,
                               style: TextStyle(fontSize: 16),

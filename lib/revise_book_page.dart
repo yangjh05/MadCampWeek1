@@ -1,24 +1,43 @@
-import 'dart:io';
+import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:flutter/services.dart';
+import 'dart:io';
 import 'package:path_provider/path_provider.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-import 'dart:convert';
+import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:googleapis_auth/auth_io.dart';
-import 'package:flutter/services.dart' show rootBundle;
 
-class BookAdd extends StatefulWidget {
+class BookAdjust extends StatefulWidget {
+  final String image;
+  final String title;
+  final String info;
+  final String intro;
+  final String author;
+  final int id;
+
+  const BookAdjust({
+    Key? key,
+    required this.image,
+    required this.title,
+    required this.info,
+    required this.intro,
+    required this.author,
+    required this.id,
+  }) : super(key: key);
+
   @override
-  _BookAddState createState() => _BookAddState();
+  _BookAdjustState createState() => _BookAdjustState();
 }
 
-class _BookAddState extends State<BookAdd> {
-  final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _authorController = TextEditingController();
-  final TextEditingController _descriptionController = TextEditingController();
-  final TextEditingController _introController = TextEditingController();
+class _BookAdjustState extends State<BookAdjust> {
+  late TextEditingController _titleController;
+  late TextEditingController _authorController;
+  late TextEditingController _descriptionController;
+  late TextEditingController _introController;
   final ImagePicker _picker = ImagePicker();
   XFile? _image;
 
@@ -28,7 +47,29 @@ class _BookAddState extends State<BookAdd> {
   @override
   void initState() {
     super.initState();
+    _titleController = TextEditingController(text: widget.title);
+    _authorController = TextEditingController(text: widget.author);
+    _descriptionController = TextEditingController(text: widget.info);
+    _introController = TextEditingController(text: widget.intro);
     _loadSecrets();
+  }
+
+  Widget displayImage(String imagePath) {
+    if (!imagePath.startsWith('assets/')) {
+      return Image.file(
+        File(imagePath),
+        fit: BoxFit.fill,
+      );
+    } else if (imagePath.startsWith('assets/')) {
+      return Image.asset(
+        imagePath,
+        fit: BoxFit.fill,
+      );
+    } else {
+      return Center(
+        child: Text('Invalid image path'),
+      );
+    }
   }
 
   Future<void> _loadSecrets() async {
@@ -168,11 +209,11 @@ class _BookAddState extends State<BookAdd> {
         _image == null) {
       return false;
     }
-    await _addBookToDatabase(context); // 비동기 작업
+    await _updateBookInDatabase(context); // 비동기 작업
     return true;
   }
 
-  Future<void> _addBookToDatabase(BuildContext context) async {
+  Future<void> _updateBookInDatabase(BuildContext context) async {
     try {
       Directory documentsDirectory = await getApplicationDocumentsDirectory();
       String dbPath = join(documentsDirectory.path, 'book.db');
@@ -183,17 +224,19 @@ class _BookAddState extends State<BookAdd> {
         );
       });
 
-      // 데이터베이스에 새 책 추가
-      await db.insert(
-          'Book',
-          {
-            'book': _titleController.text,
-            'author': _authorController.text,
-            'info': _descriptionController.text,
-            'intro': _introController.text,
-            'image': _image!.path,
-          },
-          conflictAlgorithm: ConflictAlgorithm.replace);
+      // 데이터베이스에서 기존 책 정보 업데이트
+      await db.update(
+        'Book',
+        {
+          'book': _titleController.text,
+          'author': _authorController.text,
+          'info': _descriptionController.text,
+          'intro': _introController.text,
+          'image': _image != null ? _image!.path : widget.image,
+        },
+        where: 'id = ?',
+        whereArgs: [widget.id],
+      );
 
       // 데이터베이스에서 최신 데이터 읽어오기
       List<Map<String, dynamic>> bookList = await db.query('Book');
@@ -208,7 +251,7 @@ class _BookAddState extends State<BookAdd> {
       File jsonFile = File(jsonFilePath);
       await jsonFile.writeAsString(jsonString);
     } catch (e) {
-      print("Error adding book to database: $e");
+      print("Error updating book in database: $e");
     }
   }
 
@@ -217,7 +260,7 @@ class _BookAddState extends State<BookAdd> {
     if (isSubmitted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Book submitted successfully!'),
+          content: Text('Book updated successfully!'),
           action: SnackBarAction(
             label: 'OK',
             onPressed: () {
@@ -245,7 +288,7 @@ class _BookAddState extends State<BookAdd> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Add New Book'),
+        title: Text('Edit Book'),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -291,12 +334,12 @@ class _BookAddState extends State<BookAdd> {
             ),
             SizedBox(height: 10),
             _image == null
-                ? Text('No image selected.')
-                : Image.file(File(_image!.path)),
+                ? displayImage(widget.image)
+                : displayImage(_image!.path),
             SizedBox(height: 10),
             ElevatedButton(
               onPressed: () => _handleSubmit(context),
-              child: Text('Submit Book'),
+              child: Text('Update Book'),
             ),
           ],
         ),

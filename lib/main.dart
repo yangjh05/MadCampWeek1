@@ -27,6 +27,7 @@ Future<void> initializeDatabase() async {
       data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
   File dbFile = File(dbPath);
   if (!(await dbFile.exists())) {
+    print("DB dont exist");
     await dbFile.writeAsBytes(bytes, flush: true);
     print('Database copied to ${dbFile.path}');
   }
