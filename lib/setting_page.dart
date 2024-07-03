@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
@@ -185,7 +186,7 @@ class _TodaysBookPageState extends State<TodaysBookPage>
                               color: Color.fromARGB(255, 205, 193, 175),
                             ),
                             const SizedBox(height: 30),
-                            Text(
+                            AutoSizeText(
                               _currentBookIndex != -1
                                   ? _bookTitle[_currentBookIndex]
                                   : '',
@@ -194,14 +195,37 @@ class _TodaysBookPageState extends State<TodaysBookPage>
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
                               ),
+                              maxLines: 1,
+                              minFontSize: 8,
+                              overflowReplacement: Text(
+                                _currentBookIndex != -1
+                                    ? _bookTitle[_currentBookIndex]
+                                    : '',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
                             SizedBox(height: 15),
-                            Text(
+                            AutoSizeText(
                               _currentBookIndex != -1
                                   ? _bookIntro[_currentBookIndex]
                                   : '',
                               textAlign: TextAlign.justify,
                               style: TextStyle(fontSize: 16),
+                              maxLines: 3,
+                              minFontSize: 8,
+                              overflowReplacement: Text(
+                                _currentBookIndex != -1
+                                    ? _bookIntro[_currentBookIndex]
+                                    : '',
+                                textAlign: TextAlign.justify,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                ),
+                              ),
                             ),
                           ],
                         ),

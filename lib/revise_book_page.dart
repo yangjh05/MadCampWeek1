@@ -205,8 +205,7 @@ class _BookAdjustState extends State<BookAdjust> {
     if (_titleController.text.isEmpty ||
         _authorController.text.isEmpty ||
         _descriptionController.text.isEmpty ||
-        _introController.text.isEmpty ||
-        _image == null) {
+        _introController.text.isEmpty) {
       return false;
     }
     await _updateBookInDatabase(context); // 비동기 작업
