@@ -103,6 +103,10 @@ class _TodaysBookPageState extends State<TodaysBookPage>
   }
 
   void _stopSlideshow() {
+    if (_timer == null) {
+      _showAlert();
+      return;
+    }
     _timer?.cancel();
     _timer = null;
     counter = 0; // counter 초기화
