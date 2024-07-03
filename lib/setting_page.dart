@@ -20,7 +20,6 @@ class _TodaysBookPageState extends State<TodaysBookPage>
   List<String> _bookImages = [];
   List<String> _bookTitle = [];
   List<String> _bookInfo = [];
-  bool _isPopupShown = false;
   bool showSecond = true;
   int counter = 0;
 
@@ -109,7 +108,6 @@ class _TodaysBookPageState extends State<TodaysBookPage>
   }
 
   void _showPopup() {
-    _isPopupShown = true;
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -216,7 +214,6 @@ class _TodaysBookPageState extends State<TodaysBookPage>
                         setState(() {
                           print("closing");
                           _currentBookIndex = -1;
-                          _isPopupShown = false;
                         });
                         Navigator.of(context).pop();
                       },

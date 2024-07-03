@@ -353,14 +353,20 @@ class _GalleryState extends State<GalleryPage>
 
   Widget displayImage(String imagePath) {
     if (!imagePath.startsWith('assets/')) {
-      return Image.file(
-        File(imagePath),
-        fit: BoxFit.cover,
+      return FractionallySizedBox(
+        widthFactor: 0.7, // 부모 너비의 70%
+        child: Image.file(
+          File(imagePath),
+          fit: BoxFit.cover,
+        ),
       );
     } else if (imagePath.startsWith('assets/')) {
-      return Image.asset(
-        imagePath,
-        fit: BoxFit.cover,
+      return FractionallySizedBox(
+        widthFactor: 0.7, // 부모 너비의 70%
+        child: Image.asset(
+          imagePath,
+          fit: BoxFit.cover,
+        ),
       );
     } else {
       return Center(
@@ -521,14 +527,6 @@ class _GalleryState extends State<GalleryPage>
           BlendMode.multiply,
         ),
         child: Scaffold(
-          // appBar: AppBar(
-          //   title: Text("Gallery"),
-          //   actions: [
-          //     if (_isDeleteMode)
-          //       IconButton(
-          //           onPressed: _deleteSelectedBooks, icon: Icon(Icons.delete))
-          //   ],
-          // ),
           body: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -723,115 +721,6 @@ class _GalleryState extends State<GalleryPage>
                   ]),
                 ),
                 SizedBox(height: 10),
-                // Row(
-                //   mainAxisAlignment: MainAxisAlignment.center,
-                //   children: [
-                //     ElevatedButton(
-                //       onPressed: () async {
-                //         await Navigator.push(
-                //           context,
-                //           MaterialPageRoute(builder: (context) => BookAdd()),
-                //         );
-
-                //         // pop 후에 수행할 작업
-                //         print("Reloading!!!");
-                //         // 애플리케이션 문서 디렉토리 경로 가져오기
-                //         Directory documentsDirectory =
-                //             await getApplicationDocumentsDirectory();
-                //         String dbPath = p.join(documentsDirectory.path, 'book.db');
-
-                //         // assets 폴더에서 데이터베이스 파일을 복사
-                //         ByteData data =
-                //             await rootBundle.load('assets/database/book.db');
-                //         List<int> bytes = data.buffer
-                //             .asUint8List(data.offsetInBytes, data.lengthInBytes);
-                //         File dbFile = File(dbPath);
-                //         if (!(await dbFile.exists())) {
-                //           await dbFile.writeAsBytes(bytes, flush: true);
-                //           print('Database copied to ${dbFile.path}');
-                //         }
-
-                //         // 데이터베이스 연결
-                //         Database db = await openDatabase(dbPath, version: 1);
-
-                //         // 데이터베이스에서 데이터 읽기
-                //         List<Map<String, dynamic>> bookList =
-                //             await db.query('Book');
-
-                //         // JSON 데이터로 변환
-                //         String jsonString = jsonEncode(bookList);
-
-                //         // JSON 파일 경로 설정
-                //         String jsonFilePath =
-                //             p.join(documentsDirectory.path, 'books.json');
-
-                //         // JSON 파일에 저장
-                //         File jsonFile = File(jsonFilePath);
-                //         await jsonFile.writeAsString(jsonString);
-
-                //         print('Data saved to JSON file: $jsonFilePath');
-
-                //         try {
-                //           Directory documentsDirectory =
-                //               await getApplicationDocumentsDirectory();
-                //           String jsonFilePath =
-                //               '${documentsDirectory.path}/books.json';
-
-                //           File jsonFile = File(jsonFilePath);
-                //           String response;
-
-                //           if (await jsonFile.exists()) {
-                //             // 문서 디렉토리에서 JSON 파일 읽기
-                //             response = await jsonFile.readAsString();
-                //             print("Read from DB");
-                //           } else {
-                //             // assets 폴더에서 JSON 파일 읽기
-                //             print("Read from assets");
-                //             response =
-                //                 await rootBundle.loadString('assets/books.json');
-                //             // JSON 파일을 문서 디렉토리에 저장
-                //             await jsonFile.writeAsString(response);
-                //           }
-
-                //           final data = json.decode(response);
-                //           setState(() {
-                //             imageUrls = List<Book>.from(
-                //                 data.map((item) => Book.fromJson(item)));
-                //             imageUrls.sort((a, b) => a.book.compareTo(b.book));
-                //             filteredBook = imageUrls;
-                //             filterItems();
-                //           });
-                //         } catch (e) {
-                //           print("Error loading data: $e");
-                //         }
-                //       },
-                //       child: Text('Add Book..'),
-                //       style: ElevatedButton.styleFrom(
-                //         foregroundColor: Color.fromARGB(255, 0, 0, 0),
-                //         minimumSize: Size(100, 40), // 버튼 크기 지정
-                //         padding: EdgeInsets.symmetric(
-                //             horizontal: 16, vertical: 8), // 버튼 내부 패딩
-                //         shape: RoundedRectangleBorder(
-                //           borderRadius: BorderRadius.circular(12.0),
-                //         ),
-                //       ),
-                //     ),
-                //     SizedBox(width: 20), // 버튼 사이의 간격
-                //     ElevatedButton(
-                //       onPressed: _toggleDeleteMode,
-                //       child: Text(_isDeleteMode ? 'Cancel' : 'Delete Book'),
-                //       style: ElevatedButton.styleFrom(
-                //         foregroundColor: Color.fromARGB(255, 0, 0, 0),
-                //         minimumSize: Size(100, 40), // 버튼 크기 지정
-                //         padding: EdgeInsets.symmetric(
-                //             horizontal: 16, vertical: 8), // 버튼 내부 패딩
-                //         shape: RoundedRectangleBorder(
-                //           borderRadius: BorderRadius.circular(12.0),
-                //         ),
-                //       ),
-                //     ),
-                //   ],
-                // ),
               ],
             ),
           ),
